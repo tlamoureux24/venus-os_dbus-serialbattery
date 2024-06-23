@@ -9,7 +9,6 @@
 
 from battery import Battery, Cell
 from utils import logger
-import utils
 import serial
 import time
 import minimalmodbus
@@ -30,6 +29,7 @@ locks: Dict[int, any] = {}
 class HeltecModbus(Battery):
     def __init__(self, port, baud, address):
         super(HeltecModbus, self).__init__(port, baud, address)
+        self.address = int.from_bytes(address, byteorder="big")
         self.type = "Heltec_Smart"
         self.unique_identifier_tmp = ""
 
@@ -37,66 +37,66 @@ class HeltecModbus(Battery):
         # call a function that will connect to the battery, send a command and retrieve the result.
         # The result or call should be unique to this BMS. Battery name or version, etc.
         # Return True if success, False for failure
-        for self.address in utils.HELTEC_MODBUS_ADDR:
-            logger.debug("Testing on slave address " + str(self.address))
-            found = False
-            if self.address not in locks:
-                locks[self.address] = threading.Lock()
+        logger.debug("Testing on slave address " + str(self.address))
+        found = False
+        if self.address not in locks:
+            locks[self.address] = threading.Lock()
 
-            # TODO: We need to lock not only based on the address, but based on the port as soon as multiple BMSs
-            # are supported on the same serial interface. Then locking on the port will be enough.
+        # TODO: We need to lock not only based on the address, but based on the port as soon as multiple BMSs
+        # are supported on the same serial interface. Then locking on the port will be enough.
 
-            with locks[self.address]:
-                mbdev = minimalmodbus.Instrument(
-                    self.port,
-                    slaveaddress=self.address,
-                    mode="rtu",
-                    close_port_after_each_call=True,
-                    debug=False,
-                )
-                mbdev.serial.parity = minimalmodbus.serial.PARITY_NONE
-                mbdev.serial.stopbits = serial.STOPBITS_ONE
-                mbdev.serial.baudrate = 9600
-                # yes, 400ms is long but the BMS is sometimes really slow in responding, so this is a good compromise
-                mbdev.serial.timeout = 0.4
-                mbdevs[self.address] = mbdev
+        with locks[self.address]:
+            mbdev = minimalmodbus.Instrument(
+                self.port,
+                slaveaddress=self.address,
+                mode="rtu",
+                close_port_after_each_call=True,
+                debug=False,
+            )
+            mbdev.serial.parity = minimalmodbus.serial.PARITY_NONE
+            mbdev.serial.stopbits = serial.STOPBITS_ONE
+            mbdev.serial.baudrate = 9600
+            # yes, 400ms is long but the BMS is sometimes really slow in responding, so this is a good compromise
+            mbdev.serial.timeout = 0.4
+            mbdevs[self.address] = mbdev
 
-                for n in range(1, RETRYCNT):
-                    try:
-                        string = mbdev.read_string(7, 13)
-                        time.sleep(SLPTIME)
-                        found = True
-                        logger.debug(
-                            "found in try "
-                            + str(n)
-                            + "/"
-                            + str(RETRYCNT)
-                            + " for "
-                            + self.port
-                            + "("
-                            + str(self.address)
-                            + "): "
-                            + string
-                        )
-                    except Exception as e:
-                        logger.debug(
-                            "testing failed ("
-                            + str(e)
-                            + ") "
-                            + str(n)
-                            + "/"
-                            + str(RETRYCNT)
-                            + " for "
-                            + self.port
-                            + "("
-                            + str(self.address)
-                            + ")"
-                        )
-                        continue
-                    break
-                if found:
-                    self.type = "#" + str(self.address) + "_Heltec_Smart"
-                    break
+            for n in range(1, RETRYCNT):
+                try:
+                    string = mbdev.read_string(7, 13)
+                    time.sleep(SLPTIME)
+                    found = True
+                    logger.debug(
+                        "found in try "
+                        + str(n)
+                        + "/"
+                        + str(RETRYCNT)
+                        + " for "
+                        + self.port
+                        + "("
+                        + str(self.address)
+                        + "): "
+                        + string
+                    )
+                except Exception as e:
+                    logger.debug(
+                        "testing failed ("
+                        + str(e)
+                        + ") "
+                        + str(n)
+                        + "/"
+                        + str(RETRYCNT)
+                        + " for "
+                        + self.port
+                        + "("
+                        + str(self.address)
+                        + ")"
+                    )
+                    continue
+                break
+
+            if found:
+                self.type = "#" + str(self.address) + "_Heltec_Smart"
+                # break
 
         # give the user a feedback that no BMS was found
         if not found:

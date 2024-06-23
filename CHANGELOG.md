@@ -55,7 +55,9 @@
 
 
 ## v1.3.x
+* Added: Automatically increase polling time, if polling take too long by @mr-manuel
 * Added: Fields for debugging switch to float/bulk by @mr-manuel
+* Added: Multiple BMS on one USB to RS485/Modbus adapter now possible. The BMS needs to be able to set different addresses to each battery by @mr-manuel
 * Added: Possibility to add custom polling interval to reduce the CPU load. Fixes https://github.com/Louisvdw/dbus-serialbattery/issues/1022 by @mr-manuel
 * Added: Possibility to select if min/max battery voltage, CVL, CCL and DCL are used from driver or BMS. Fixes https://github.com/Louisvdw/dbus-serialbattery/issues/1056 by @mr-manuel
 * Added: Possibility to use port name as unique identifier https://github.com/Louisvdw/dbus-serialbattery/issues/1035 by @mr-manuel

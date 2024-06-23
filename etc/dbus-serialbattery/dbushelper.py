@@ -23,18 +23,24 @@ from settingsdevice import (  # noqa: E402
 )
 
 
-def get_bus() -> dbus.bus.BusConnection:
-    return (
-        dbus.SessionBus()
-        if "DBUS_SESSION_BUS_ADDRESS" in os.environ
-        else dbus.SystemBus()
-    )
+class SystemBus(dbus.bus.BusConnection):
+    def __new__(cls):
+        return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SYSTEM)
+
+
+class SessionBus(dbus.bus.BusConnection):
+    def __new__(cls):
+        return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SESSION)
+
+
+def get_dbus():
+    return SessionBus() if "DBUS_SESSION_BUS_ADDRESS" in os.environ else SystemBus()
 
 
 class DbusHelper:
     EMPTY_DICT = {}
 
-    def __init__(self, battery):
+    def __init__(self, battery, bms_address=None):
         self.battery = battery
         self.instance = 1
         self.settings = None
@@ -43,8 +49,10 @@ class DbusHelper:
         self._dbusname = (
             "com.victronenergy.battery."
             + self.battery.port[self.battery.port.rfind("/") + 1 :]
+            + ("__" + str(bms_address) if utils.MODBUS_ADDRESSES else "")
         )
-        self._dbusservice = VeDbusService(self._dbusname, get_bus())
+        logger.info(f"dbusname_post = {self._dbusname}")
+        self._dbusservice = VeDbusService(self._dbusname, get_dbus())
         self.bms_id = "".join(
             # remove all non alphanumeric characters from the identifier
             c if c.isalnum() else "_"
@@ -156,13 +164,13 @@ class DbusHelper:
 
         # prepare settings class
         self.settings = SettingsDevice(
-            get_bus(), self.EMPTY_DICT, self.handle_changed_setting
+            get_dbus(), self.EMPTY_DICT, self.handle_changed_setting
         )
         logger.debug("setup_instance(): SettingsDevice")
 
         # get all the settings from the dbus
         settings_from_dbus = self.getSettingsWithValues(
-            get_bus(),
+            get_dbus(),
             "com.victronenergy.settings",
             "/Settings/Devices",
         )
@@ -337,7 +345,7 @@ class DbusHelper:
                     ) - (60 * 60 * 24 * 30):
                         # remove entry
                         del_return = self.removeSetting(
-                            get_bus(),
+                            get_dbus(),
                             "com.victronenergy.settings",
                             "/Settings/Devices/" + key,
                             [
@@ -358,7 +366,7 @@ class DbusHelper:
                     # check if the battery has a last seen time, if not then it's an old entry and can be removed
                     elif "LastSeen" not in value:
                         del_return = self.removeSetting(
-                            get_bus(),
+                            get_dbus(),
                             "com.victronenergy.settings",
                             "/Settings/Devices/" + key,
                             ["ClassAndVrmInstance"],
@@ -376,7 +384,7 @@ class DbusHelper:
                         and "ClassAndVrmInstance" not in value
                     ):
                         del_return = self.removeSetting(
-                            get_bus(),
+                            get_dbus(),
                             "com.victronenergy.settings",
                             "/Settings/Devices/" + key,
                             ["CustomName", "Enabled", "TemperatureType"],
@@ -450,7 +458,7 @@ class DbusHelper:
         # update last seen
         if found_bms:
             self.setSetting(
-                get_bus(),
+                get_dbus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "LastSeen",
@@ -480,10 +488,12 @@ class DbusHelper:
             return
 
     # this function is called when the battery is initiated
-    def setup_vedbus(self):
-        # Set up dbus service and device instance
-        # and notify of all the attributes we intend to update
-        # This is only called once when a battery is initiated
+    def setup_vedbus(self) -> bool:
+        """
+        Set up dbus service and device instance
+        and notify of all the attributes we intend to update
+        This is only called once when a battery is initiated
+        """
         self.setup_instance()
         logger.info("%s" % (self._dbusname))
 
@@ -1274,7 +1284,7 @@ class DbusHelper:
     # save custom name to dbus
     def custom_name_callback(self, path, value) -> str:
         result = self.setSetting(
-            get_bus(),
+            get_dbus(),
             "com.victronenergy.settings",
             self.path_battery,
             "CustomName",
@@ -1294,7 +1304,7 @@ class DbusHelper:
             != self.save_charge_details_last["allow_max_voltage"]
         ):
             result = result + self.setSetting(
-                get_bus(),
+                get_dbus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "AllowMaxVoltage",
@@ -1313,7 +1323,7 @@ class DbusHelper:
             != self.save_charge_details_last["max_voltage_start_time"]
         ):
             result = result and self.setSetting(
-                get_bus(),
+                get_dbus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "MaxVoltageStartTime",
@@ -1333,7 +1343,7 @@ class DbusHelper:
 
         if self.battery.soc_calc != self.save_charge_details_last["soc_calc"]:
             result = result and self.setSetting(
-                get_bus(),
+                get_dbus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "SocCalc",
@@ -1347,7 +1357,7 @@ class DbusHelper:
             != self.save_charge_details_last["soc_reset_last_reached"]
         ):
             result = result and self.setSetting(
-                get_bus(),
+                get_dbus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "SocResetLastReached",

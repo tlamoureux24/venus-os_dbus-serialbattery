@@ -37,7 +37,7 @@ def _get_list_from_config(
 
 
 # Constants
-DRIVER_VERSION = "1.3.20240621dev"
+DRIVER_VERSION = "1.3.20240623modbus"
 zero_char = chr(48)
 degree_sign = "\N{DEGREE SIGN}"
 
@@ -116,6 +116,11 @@ SOC_RESET_AFTER_DAYS = (
     int(config["DEFAULT"]["SOC_RESET_AFTER_DAYS"])
     if config["DEFAULT"]["SOC_RESET_AFTER_DAYS"] != ""
     else False
+)
+
+# --------- Modbus (multiple BMS on one serial adapter) ---------
+MODBUS_ADDRESSES = _get_list_from_config(
+    "DEFAULT", "MODBUS_ADDRESSES", lambda v: str(v)
 )
 
 # --------- BMS disconnect behaviour ---------
@@ -362,6 +367,9 @@ POLL_INTERVAL = (
     if config["DEFAULT"]["POLL_INTERVAL"] != ""
     else None
 )
+"""
+Poll interval in milliseconds
+"""
 
 # Auto reset SoC
 AUTO_RESET_SOC = "True" == config["DEFAULT"]["AUTO_RESET_SOC"]
@@ -403,9 +411,9 @@ LIPRO_END_ADDRESS = int(config["DEFAULT"]["LIPRO_END_ADDRESS"])
 LIPRO_CELL_COUNT = int(config["DEFAULT"]["LIPRO_CELL_COUNT"])
 
 # -- HeltecModbus device settings
-HELTEC_MODBUS_ADDR = _get_list_from_config(
-    "DEFAULT", "HELTEC_MODBUS_ADDR", lambda v: int(v)
-)
+# HELTEC_MODBUS_ADDR = _get_list_from_config(
+#     "DEFAULT", "HELTEC_MODBUS_ADDR", lambda v: int(v)
+# )
 
 # -- Seplos V3 settings
 SEPLOS_USE_BMS_VALUES = "True" == config["DEFAULT"]["SEPLOS_USE_BMS_VALUES"]

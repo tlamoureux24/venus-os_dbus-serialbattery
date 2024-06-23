@@ -3,6 +3,7 @@
 from typing import Union
 
 from time import sleep
+from datetime import datetime
 from dbus.mainloop.glib import DBusGMainLoop
 
 import sys
@@ -21,6 +22,7 @@ from dbushelper import DbusHelper
 from utils import logger
 import utils
 from battery import Battery
+import math
 
 # import battery classes
 from bms.daly import Daly
@@ -75,15 +77,40 @@ logger.info("")
 logger.info("Starting dbus-serialbattery")
 
 
+# count loops
+loop_count = 0
+
+
 def main():
     # NameError: free variable 'expected_bms_types' referenced before assignment in enclosing scope
     global expected_bms_types
 
     def poll_battery(loop):
-        helper.publish_battery(loop)
+        global loop_count
+
+        # count execution time with milliseconds
+        start = datetime.now()
+
+        for key_address in battery:
+            helper[key_address].publish_battery(loop)
+
+        runtime = (datetime.now() - start).total_seconds()
+        logger.debug(f"Polling data took {runtime:.3f} seconds")
+
+        # check if polling took too long and adjust poll interval, but only after 5 loops
+        # since the first polls are always slower
+        if loop_count > 5 and runtime > battery[first_key].poll_interval / 1000:
+            new_poll_interval = math.ceil(runtime + 0.8) * 1000
+            battery[first_key].poll_interval = new_poll_interval
+            logger.warning(
+                f"Polling took too long. Set to {new_poll_interval/1000:.3f} s"
+            )
+
+        loop_count += 1
+
         return True
 
-    def get_battery(_port) -> Union[Battery, None]:
+    def get_battery(_port: str, _modbus_address: hex = None) -> Union[Battery, None]:
         # all the different batteries the driver support and need to test for
         # try to establish communications with the battery 3 times, else exit
         retry = 1
@@ -96,21 +123,29 @@ def main():
             for test in expected_bms_types:
                 # noinspection PyBroadException
                 try:
+                    if _modbus_address is not None:
+                        # convert hex string to bytes
+                        _bms_address = bytes.fromhex(_modbus_address.replace("0x", ""))
+                    elif "address" in test:
+                        _bms_address = test["address"]
+                    else:
+                        _bms_address = None
+
                     logger.info(
                         "Testing "
                         + test["bms"].__name__
                         + (
                             ' at address "'
-                            + utils.bytearray_to_string(test["address"])
+                            + utils.bytearray_to_string(_bms_address)
                             + '"'
-                            if "address" in test
+                            if _bms_address is not None
                             else ""
                         )
                     )
                     batteryClass = test["bms"]
                     baud = test["baud"]
                     battery: Battery = batteryClass(
-                        port=_port, baud=baud, address=test.get("address")
+                        port=_port, baud=baud, address=_bms_address
                     )
                     if battery.test_connection() and battery.validate_data():
                         logger.info(
@@ -168,7 +203,7 @@ def main():
     logger.info("dbus-serialbattery v" + str(utils.DRIVER_VERSION))
 
     port = get_port()
-    battery = None
+    battery = {}
 
     # wait some seconds to be sure that the serial connection is ready
     # else the error throw a lot of timeouts
@@ -191,7 +226,7 @@ def main():
         testbms = class_("", 9600, sys.argv[2])
         if testbms.test_connection():
             logger.info("Connection established to " + testbms.__class__.__name__)
-            battery = testbms
+            battery[0] = testbms
 
     elif port.startswith("can"):
         """
@@ -214,14 +249,46 @@ def main():
             or len(utils.BMS_TYPE) == 0
         ]
 
-        battery = get_battery(port)
+        battery[0] = get_battery(port)
 
     else:
-        battery = get_battery(port)
+        # check if MODBUS_ADDRESSES is not empty
+        if utils.MODBUS_ADDRESSES:
+            for address in utils.MODBUS_ADDRESSES:
+                battery[address] = get_battery(port, address)
+        # use default address
+        else:
+            battery[0] = get_battery(port)
 
-    # exit if no battery could be found
-    if battery is None:
-        logger.error("ERROR >>> No battery connection at " + port)
+    # check if at least one BMS was found
+    battery_found = False
+
+    for key_address in battery:
+        if battery[key_address] is not None:
+            battery_found = True
+        elif key_address != 0:
+            # remove item from battery dict so that only the found batteries are used
+            del battery[key_address]
+            logger.warning(
+                "No battery connection at "
+                + port
+                + " and this Modbus address "
+                + str(key_address)
+            )
+
+    # get first key from battery dict
+    first_key = list(battery.keys())[0]
+
+    if not battery_found:
+        logger.error(
+            "ERROR >>> No battery connection at "
+            + port
+            + (
+                " and this Modbus addresses: " + ", ".join(utils.MODBUS_ADDRESSES)
+                if utils.MODBUS_ADDRESSES
+                else ""
+            )
+        )
         sys.exit(1)
 
     # Have a mainloop, so we can send/receive asynchronous calls to and from dbus
@@ -231,35 +298,54 @@ def main():
     mainloop = gobject.MainLoop()
 
     # Get the initial values for the battery used by setup_vedbus
-    helper = DbusHelper(battery)
+    helper = {}
 
-    if not helper.setup_vedbus():
-        logger.error("ERROR >>> Problem with battery set up at " + port)
-        sys.exit(1)
+    for key_address in battery:
+        helper[key_address] = DbusHelper(battery[key_address], key_address)
+        if not helper[key_address].setup_vedbus():
+            logger.error(
+                "ERROR >>> Problem with battery set up at "
+                + port
+                + (
+                    " and this Modbus address: " + ", ".join(utils.MODBUS_ADDRESSES)
+                    if utils.MODBUS_ADDRESSES
+                    else ""
+                )
+            )
+            sys.exit(1)
 
-    # try using active callback on this battery
-    if not battery.use_callback(lambda: poll_battery(mainloop)):
+    # try using active callback on this battery (normally only used for Bluetooth BMS)
+    if not battery[first_key].use_callback(lambda: poll_battery(mainloop)):
         # change poll interval if set in config
         if utils.POLL_INTERVAL is not None:
-            battery.poll_interval = utils.POLL_INTERVAL
+            battery[first_key].poll_interval = utils.POLL_INTERVAL
+
+        logger.info(f"Polling data every {battery[first_key].poll_interval/1000:.3f} s")
+
         # if not possible, poll the battery every poll_interval milliseconds
-        gobject.timeout_add(battery.poll_interval, lambda: poll_battery(mainloop))
+        gobject.timeout_add(
+            battery[first_key].poll_interval,
+            lambda: poll_battery(mainloop),
+        )
 
     # print log at this point, else not all data is correctly populated
-    battery.log_settings()
+    for key_address in battery:
+        battery[key_address].log_settings()
 
     # check config, if there are any invalid values trigger "settings incorrect" error
     if not utils.validate_config_values():
-        battery.state = 10
-        battery.error_code = 31
+        for key_address in battery:
+            battery[key_address].state = 10
+            battery[key_address].error_code = 31
 
     # use external current sensor if configured
     try:
         if (
             utils.EXTERNAL_CURRENT_SENSOR_DBUS_DEVICE is not None
             and utils.EXTERNAL_CURRENT_SENSOR_DBUS_PATH is not None
+            and battery[0] is not None
         ):
-            battery.monitor_external_current()
+            battery[0].monitor_external_current()
     except Exception:
         # set to None to avoid crashing, fallback to battery current
         utils.EXTERNAL_CURRENT_SENSOR_DBUS_DEVICE = None
