@@ -261,6 +261,11 @@ Most unstable communications arise due to:
 * Cheap USB Hubs: Make sure you are using a qualitative USB Hub with enough power.
 * Raspberry Pi: Do not use a charger for powering the Raspberry Pi. Instead buy a power supply with enough power.
 
+## Why do I have a high CPU usage after installing the driver?
+
+The driver polls a lot of data every second (for most BMS), which also has to be elaborated. Additionaly the more BMS and USB to serial adapter you have connected, the bigger the load. If your system cannot handle this and reboots often (check with `uptime`), try to set the `POLL_INTERVAL` in the `config.ini` to `2` and then increase this value by one, until the CPU overload is fixed. Keep in mind, that the battery data is then refreshed less often and the system can become unstable.
+
+
 ## How can I reset the SOC to 100%?
 
 See the SOC sections on the [features page](../general/features.md#soc-reset-voltage).
