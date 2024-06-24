@@ -33,7 +33,7 @@ class SessionBus(dbus.bus.BusConnection):
         return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SESSION)
 
 
-def get_dbus():
+def get_dbus() -> dbus.bus.BusConnection:
     return SessionBus() if "DBUS_SESSION_BUS_ADDRESS" in os.environ else SystemBus()
 
 
