@@ -10,20 +10,16 @@ This is a driver for Venus OS devices (any GX device sold by Victron or a Raspbe
 
 The driver will communicate with a Battery Management System (BMS) that support serial (RS232, RS485 or TTL UART) and Bluetooth communication (see [BMS feature comparison](./general/features#bms-feature-comparison) for details). The data is then published to the Venus OS system (dbus). The main purpose is to act as a Battery Monitor in your GX and supply State of Charge (SoC) and other values to the inverter/charger.
 
-### Supporting this project
-If you find this driver helpful please consider supporting this project. You can buy me a Ko-Fi or get in contact, if you would like to donate hardware for development.
+## History
+The first version of this driver was released by [Louisvdw](https://github.com/Louisvdw/dbus-serialbattery) in September 2020.
+In February 2023 I (mr-manuel) made my first PR, since Louis did not have time anymore to contribute to this project.
+With the release of `v1.0.0` I became the main developer of this project and since then I'm maintaining and updating it.
 
-### Support [Louisvdw](https://github.com/Louisvdw)
-* Main developer
-* Added most of the BMS drivers
+A big thanks to [Louisvdw](https://github.com/Louisvdw/dbus-serialbattery) for the initiation of this project.
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z73LCW1) or using [Paypal.me](https://paypal.me/innernet)
-
-### Support [mr-manuel](https://github.com/mr-manuel)
-* Added a lot of features, optimizations and improvements with `v1.0.x`
-* Assistance with the issues and discussions of forum
-* Added a lot of documentation to the config file and notes that are displayed after installation for better understanding
-* Introduced the new documentation page of the driver and reworked a great part of it for easier understanding
+## Support this project
+This project takes a lot of time and effort to maintain, answering support requests, adding new features and so on.
+If you are using this driver and you are happy with it, please make a donation to support me and this project.
 
 [<img src="https://github.md0.eu/uploads/donate-button.svg" style={{width: '178px', height: '38px'}} />](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
 

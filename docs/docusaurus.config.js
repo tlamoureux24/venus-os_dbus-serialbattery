@@ -3,8 +3,8 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
-const organizationName = "louisvdw";
-const projectName = "dbus-serialbattery";
+const organizationName = "mr-manuel";
+const projectName = "venus-os_dbus-serialbattery";
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -46,7 +46,7 @@ const config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl: ({ docPath }) => {
-                        return `https://holocron.so/github/pr/Louisvdw/dbus-serialbattery/master/editor/docs/docs/${docPath}`
+                        return `https://holocron.so/github/pr/mr-manuel/venus-os_dbus-serialbattery/docusaurus/editor/docs/docs/${docPath}`
                     },
                     sidebarCollapsible: false
                 },
@@ -61,9 +61,9 @@ const config = {
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             algolia: {
-                appId: 'BUS7YVLUUB',
-                apiKey: '11f8f0c4ceaf5dd684a254191cc007d6',
-                indexName: 'dbus-serialbattery',
+                appId: '28QXXQCY25',
+                apiKey: 'be57479272c890c67a6abf7452bdc47d',
+                indexName: 'mr-manuelio',
             },
             //
             colorMode: {

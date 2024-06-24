@@ -39,8 +39,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
-    # execute only in Louisvdw repository
-    if: github.repository_owner == 'Louisvdw'
+    # execute only in mr-manuel repository
+    if: github.repository_owner == 'mr-manuel'
 
     #defaults:
     #  run:

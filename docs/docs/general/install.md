@@ -21,16 +21,13 @@ toc_max_heading_level: 4
 
 ## Compatibility Matrix
 
-| &darr; Venus OS version \ Driver version &rarr;  | v0.12.0  | v0.13.0  | v0.14.x              | v1.0.0   |
+| &darr; Venus OS version \ Driver version &rarr;  | v0.12.0  | v0.13.0  | v0.14.x              | v1.x.x   |
 | ---                                              | :---:    | :---:    | :---:                | :---:    |
-| v2.80 - v2.84                                    | x        | x        | untested             | untested |
-| v2.85 - v2.89                                    | x        | x        | untested             | untested |
-| v2.90 - v2.94                                    | untested | x        | x                    | x        |
-| v3.00~1 - v3.00~13                               | untested | untested | x                    | x        |
-| v3.00~14 - v3.00~42                              | untested | untested | x<sup>1)</sup>       | x        |
-| v3.00 - v3.20~30                                 | untested | untested | x<sup>1)</sup>       | x        |
+| v2.80 - v2.84                                    | ok       | ok       | untested             | untested |
+| v2.85 - v2.89                                    | ok       | ok       | untested             | untested |
+| v2.90 - v2.94                                    | untested | ok       | ok                   | ok       |
+| v3.00 - v3.x                                     | untested | untested | not supported        | ok       |
 
-1) Partially supported. Empty values/pages are not hidden in the GUI
 
 ## Default hard limits
 
@@ -72,9 +69,9 @@ In [VRM](https://vrm.victronenergy.com/) look under the device list for your ins
 
 > It might be, that this doesn't work on older CerboGX devices. In this case use SSH option instead.
 
-1. Download and copy the [latest release](https://github.com/Louisvdw/dbus-serialbattery/releases) `venus-data.tar.gz` to the root of a USB flash drive that is in FAT32 format (a SD card is also an option for GX devices, but not for Raspberry Pi).
+1. Download and copy the [latest release](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) `venus-data.tar.gz` to the root of a USB flash drive that is in FAT32 format (a SD card is also an option for GX devices, but not for Raspberry Pi).
 
-1. OPTIONAL (`>= v1.0.0`): Create a `config.ini` file in the root of your USB flash drive with your custom settings. Put `[DEFAULT]` in the first line of the file and add all the values you want to change below. You only have to insert the values you want to change, all other values are fetched from the `config.default.ini`. In the [`config.default.ini`](https://github.com/Louisvdw/dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini) you find all possible settings that you can copy over and change.
+1. OPTIONAL (`>= v1.0.0`): Create a `config.ini` file in the root of your USB flash drive with your custom settings. Put `[DEFAULT]` in the first line of the file and add all the values you want to change below. You only have to insert the values you want to change, all other values are fetched from the `config.default.ini`. In the [`config.default.ini`](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini) you find all possible settings that you can copy over and change.
 
    > If you put a `config.ini` in the root of the USB flash drive, then an existing `config.ini` will be overwritten.
 
@@ -92,7 +89,7 @@ In [VRM](https://vrm.victronenergy.com/) look under the device list for your ins
 1. Run these commands to start the installer.
 
   ```bash
-  wget -O /tmp/install.sh https://raw.githubusercontent.com/Louisvdw/dbus-serialbattery/master/etc/dbus-serialbattery/install.sh
+  wget -O /tmp/install.sh https://raw.githubusercontent.com/mr-manuel/venus-os_dbus-serialbattery/master/etc/dbus-serialbattery/install.sh
 
   bash /tmp/install.sh
   ```
@@ -108,6 +105,9 @@ In [VRM](https://vrm.victronenergy.com/) look under the device list for your ins
    1. [Nightly build](#nightly-build)
       Nightly version, newest features and fixes, bugs possible.
 
+   1. [Specific branch](#specific-branch)
+      Nightly version, specific feature testing, bugs possible.
+
    1. [Specific version](#specific-versiontroubleshooting-option)
 
    1. [Local tar file](#local-tar-file)
@@ -116,7 +116,7 @@ In [VRM](https://vrm.victronenergy.com/) look under the device list for your ins
 
 Stable version, tested for more then a week.
 
-Run the [install script](#install-or-update-over-ssh) and select `1` or `2`.
+Run the [install script](#install-or-update-over-ssh) and select `1`.
 
 💡 Reboot the system after the installation finished with `reboot`.
 
@@ -124,7 +124,7 @@ Run the [install script](#install-or-update-over-ssh) and select `1` or `2`.
 
 Beta version, no errors after 72 h runtime, long time testing needed.
 
-Run the [install script](#install-or-update-over-ssh) and select `3` or `4`.
+Run the [install script](#install-or-update-over-ssh) and select `2`.
 
 💡 Reboot the system after the installation finished with `reboot`.
 
@@ -134,19 +134,29 @@ Nightly version, newest features and fixes, bugs possible. Please keep your syst
 
 > Not recommended in production environment, unless you know what you do. Testers are very welcome!
 
-Run the [install script](#install-or-update-over-ssh) and select `5` or `6`.
+Run the [install script](#install-or-update-over-ssh) and select `3`.
+
+💡 Reboot the system after the installation finished with `reboot`.
+
+#### Specific branch
+
+Nightly version, specific feature testing, bugs possible. Please keep your system monitored.
+
+> Not recommended in production environment, unless you know what you do. Testers are very welcome!
+
+Run the [install script](#install-or-update-over-ssh) and select `4`.
 
 💡 Reboot the system after the installation finished with `reboot`.
 
 #### Specific version/troubleshooting option
 
-Run the [install script](#install-or-update-over-ssh) and select `7`. Go to [releases](https://github.com/Louisvdw/dbus-serialbattery/releases) or [releases](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) and copy the link to the `venus-data.tar.gz` version you like to install. Paste the link with a right click and press enter.
+Run the [install script](#install-or-update-over-ssh) and select `5`. Go to [releases](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) or [releases](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) and copy the link to the `venus-data.tar.gz` version you like to install. Paste the link with a right click and press enter.
 
 💡 Reboot the system after the installation finished with `reboot`.
 
 #### Local tar file
 
-Place a `venus-data.tar.gz` file in the folder `/var/volatile/tmp/` by copying/uploading it. Run the [install script](#install-or-update-over-ssh) and select `8`.
+Place a `venus-data.tar.gz` file in the folder `/var/volatile/tmp/` by copying/uploading it. Run the [install script](#install-or-update-over-ssh) and select `6`.
 
 💡 Reboot the system after the installation finished with `reboot`.
 
@@ -157,7 +167,7 @@ Place a `venus-data.tar.gz` file in the folder `/var/volatile/tmp/` by copying/u
 * ECS BMS &rarr; Check [#254 ECS BMS (comment)](https://github.com/Louisvdw/dbus-serialbattery/issues/254#issuecomment-1275924313)
 * MNB BMS &rarr; Check [MNB BMS setup](https://github.com/Louisvdw/dbus-serialbattery/issues/590)
 
-Since driver version `>= v1.0.0` you can also get an overview of the BMS specific settings be checking the end of the [`config.default.ini`](https://github.com/Louisvdw/dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini).
+Since driver version `>= v1.0.0` you can also get an overview of the BMS specific settings be checking the end of the [`config.default.ini`](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini).
 
 
 ### Get BMS MAC address
@@ -244,7 +254,7 @@ Edit `/data/etc/dbus-serialbattery/utils.py` to update the constants. Note that 
 ### Driver version `>= v1.0.0` (`config.ini`)
 Copy the values you want to change from `/data/etc/dbus-serialbattery/config.default.ini` and insert them in the `/data/etc/dbus-serialbattery/config.ini`.
 
-All available options can also be found [here](https://github.com/Louisvdw/dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini).
+All available options can also be found [here](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini).
 
 ## How to edit `utils.py` or `config.ini`
 
