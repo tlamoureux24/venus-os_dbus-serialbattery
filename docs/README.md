@@ -25,7 +25,7 @@ This command generates static content into the `build` directory and can be serv
 ## Start local server
 
 ```bash
-npm run serve
+yarn start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
