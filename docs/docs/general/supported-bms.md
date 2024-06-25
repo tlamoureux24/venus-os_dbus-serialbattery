@@ -9,54 +9,70 @@ toc_max_heading_level: 4
 
 # Supported BMS
 
+## Most used BMS
+This are the three most used BMS with this driver.
+
+🥇 JKBMS (51% of all systems)
+
+🥈 Jiabaida JDB BMS (20% of all systems)
+
+🥉 Daly BMS (14% of all systems)
+
 ## Currently supported
-### &bull; ANT BMS
+
+### &bull; [ANT BMS](https://antbms.vip)
 Disabled by default since driver version `v1.0.0` as it causes other issues. More informations can be found in [Add other use case (grid meter) or ignore devices - ANT BMS check missing](https://github.com/Louisvdw/dbus-serialbattery/issues/479) and if it was fixed. See [How to enable a disabled BMS](../general/install.md#how-to-enable-a-disabled-bms) to enable the BMS.
 
-### &bull; Daly Smart BMS
-Including:
-#### - Sinowealth based Daly BMS
-Disabled by default since driver version `v0.14.0` as it causes other issues. See [How to enable a disabled BMS](../general/install.md#how-to-enable-a-disabled-bms) to enable the BMS.
-
+### &bull; [Daly BMS](https://dalybms.com/) 🥉 <small>Third most used BMS</small>
 ![Daly app](../../screenshots/bms-daly.jpg)
 
-### &bull; ECS GreenMeter with LiPro
+### &bull; [ECS](https://ecs-online.org) GreenMeter with LiPro
 
-### &bull; HeltecModbus SmartBMS (YanYang BMS)
+### &bull; [EG4](https://eg4electronics.com) LiFePOWER
+Works also for:
+#### |- [Revov](https://revov.co.za/)
+#### |- [Tian Power](https://www.tian-power.com)
+
+### &bull; [EG4](https://eg4electronics.com/) LL
+
+### &bull; [Heltec Modbus SmartBMS](https://heltec-bms.com) / [YanYang BMS](http://en.yybms.com)
 Communication to the Heltec SmartBMS (which is a rebranded YYBMS) via Modbus/RS485.
 
-### &bull; HLPdataBMS4S
+### &bull; [HLPdata](https://www.hlpdata.se) BMS4S
 
-### &bull; [JKBMS](https://www.jkbms.com/products/) / Heltec BMS <img src="/venus-os_dbus-serialbattery/img/bluetooth.svg" className="h-1em" />
-Bluetooth connection supported
+### &bull; [JKBMS](https://www.jkbms.com) 🥇 <small>Most used BMS</small>
+Bluetooth connection supported <img src="/venus-os_dbus-serialbattery/img/bluetooth.svg" className="h-1em" />
 
-### &bull; Life/Tian Power
-Including:
+Works also for:
+#### |- [Heltec BMS](https://heltec-bms.com)
 
-#### - Revov
+### &bull; [Jiabaida JDB BMS](https://dgjbd.en.alibaba.com/) 🥈  <small>Second most used BMS</small>
+Bluetooth connection supported <img src="/venus-os_dbus-serialbattery/img/bluetooth.svg" className="h-1em" />
+
+Works also for:
+#### |- [LLT Power](https://www.lithiumbatterypcb.com/product-instructionev-battery-pcb-boardev-battery-pcb-board/ev-battery-pcb-board/smart-bms-of-power-battery/)
+#### |- [Overkill Solar](https://overkillsolar.com/)
+#### |- Smart BMS
+#### |- Other BMS that use the Xiaoxiang phone app
+
+### &bull; [JKBMS](https://www.jkbms.com) Inverter
 
 ### &bull; MNB spi BMS
 Disabled by default as it requires additional manual steps to install.
 
-### &bull; Renogy BMS
+### &bull; [Renogy BMS](https://www.renogy.com)
 
-### &bull; Seplos
+### &bull; [Seplos](https://www.seplos.com)
 So far only tested on version `16E`.
 
-### &bull; Seplos v3
+### &bull; [Seplos v3](https://www.seplos.com)
 Working on the Seplos v3 BMS which uses different (modbus) protocol than the earlier Seplos models.
 
-### &bull; Smart BMS <img src="/venus-os_dbus-serialbattery/img/bluetooth.svg" className="h-1em" />
-Bluetooth connection supported
-
-Including:
-#### - [LLT Power](https://www.lithiumbatterypcb.com/product-instructionev-battery-pcb-boardev-battery-pcb-board/ev-battery-pcb-board/smart-bms-of-power-battery/)
-#### - [Jiabaida JDB BMS](https://dgjbd.en.alibaba.com/)
-#### - Overkill Solar
-#### - Other BMS that use the Xiaoxiang phone app
+### &bull; [Sinowealth](https://en.sinowealth.com)
+Disabled by default since driver version `v0.14.0` as it causes other issues. See [How to enable a disabled BMS](../general/install.md#how-to-enable-a-disabled-bms) to enable the BMS.
 
 | Android | iOS |
-|-|-|
+| - |-|
 | ![Xiaoxian app](../../screenshots/bms-xiaoxian-android.jpg) | ![Xiaoxian app](../../screenshots/bms-xiaoxian-ios.jpg) |
 
 ## Planned support
