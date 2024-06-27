@@ -24,7 +24,7 @@ This are the three most used BMS with this driver.
 Disabled by default since driver version `v1.0.0` as it causes other issues. More informations can be found in [Add other use case (grid meter) or ignore devices - ANT BMS check missing](https://github.com/Louisvdw/dbus-serialbattery/issues/479) and if it was fixed. See [How to enable a disabled BMS](../general/install.md#how-to-enable-a-disabled-bms) to enable the BMS.
 
 ### &bull; [Daly BMS](https://dalybms.com/) 🥉 <small>Third most used BMS</small>
-![Daly app](../../screenshots/bms-daly.jpg)
+![Daly app](../screenshots/bms-daly.jpg)
 
 ### &bull; [ECS](https://ecs-online.org) GreenMeter with LiPro
 
@@ -55,7 +55,7 @@ Bluetooth connection supported <img src="/venus-os_dbus-serialbattery/img/blueto
 Works also for:
 #### |- [Heltec BMS](https://heltec-bms.com)
 
-### &bull; [JKBMS](https://www.jkbms.com) Inverter
+### &bull; [JKBMS](https://www.jkbms.com) PB Model (also know as JK Inverter BMS)
 
 ### &bull; MNB spi BMS
 Disabled by default as it requires additional manual steps to install.
@@ -73,7 +73,7 @@ Disabled by default since driver version `v0.14.0` as it causes other issues. Se
 
 | Android | iOS |
 | - |-|
-| ![Xiaoxian app](../../screenshots/bms-xiaoxian-android.jpg) | ![Xiaoxian app](../../screenshots/bms-xiaoxian-ios.jpg) |
+| ![Xiaoxian app](../screenshots/bms-xiaoxian-android.jpg) | ![Xiaoxian app](../screenshots/bms-xiaoxian-ios.jpg) |
 
 ## Planned support
 
