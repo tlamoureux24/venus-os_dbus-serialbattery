@@ -64,7 +64,7 @@ The limits can be applied in Step or Linear mode.
 * **Linear** will give a gradual change from one limit range to the next
 
 ### CCCM attributes
-You can set CCCM limits for 3 attributes which can be enabled / disabled and adjusted by settings in `utils.py` (driver version `<= v0.14.3`) or `config.ini` (driver version `>= v1.0.0`).
+You can set CCCM limits for 3 attributes which can be enabled / disabled and adjusted by settings in `config.ini`.
 The smallest limit from all enabled will apply.
 
 ### Cell voltage

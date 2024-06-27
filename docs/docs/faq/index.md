@@ -18,9 +18,9 @@ The `config.default.ini` is a file where all possible configuration settings are
 
 Click [here](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/master/etc/dbus-serialbattery/config.default.ini) to see the `config.default.ini`.
 
-## How to edit `utils.py` or `config.ini`
+## How to edit the `config.ini`
 
-See [this page](../general/install.md#how-to-edit-utilspy-or-configini).
+See [this page](../general/install.md#how-to-edit-the-configini).
 
 ## How to enable a disabled BMS
 
@@ -158,17 +158,6 @@ You get most of the power from the cells between `3.1V - 3.45V` and you will hav
 
 ## Why is the charging/discharging current limit (CCL/DCL) smaller than the set one?
 
-### Driver version `<= v0.14.3`
-
-Check in the `utils.py`, if you have set one of this to true. If yes, then you also have to change the corresponding limits.
-
-* `CCCM_CV_ENABLE = True` then modify the highest value (60) `MAX_CHARGE_CURRENT_CV = [0, 2, 30, 60]` to the same value or bigger as `MAX_BATTERY_CHARGE_CURRENT`
-* `DCCM_CV_ENABLE = True` then modify `MAX_DISCHARGE_CURRENT_CV = [0, 5, 30, 60]`
-* `CCCM_T_ENABLE = True` then modify `MAX_CHARGE_CURRENT_T = [0, 28, 60, 60, 28, 0]`
-* `DCCM_T_ENABLE = True` then modify `MAX_DISCHARGE_CURRENT_T = [0, 28, 60, 60, 28, 0]`
-
-### Driver version `>= v1.0.0`
-
 The limits are based on percentages of `MAX_BATTERY_CHARGE_CURRENT` and `MAX_BATTERY_DISCHARGE_CURRENT` values, so there is no need for additional modifications. Additionaly you see in the remote console/GUI under `SerialBattery` &rarr; `Parameters` why it's limited.
 
 ![VenusOS](../screenshots/venus-os_013.png)
@@ -180,7 +169,7 @@ Navigate to `Settings -> DVCC`, check that `DVCC` is enabled and that under `Con
 
 Make sure you have set this options in the `config.ini`:
 ```ini
-LOGGING = DEBUG  # needed to show debugging in the remote console/GUI
+GUI_PARAMETERS_SHOW_ADDITIONAL_INFO = True
 CVCM_ENABLE = True
 ```
 
@@ -249,7 +238,7 @@ The Daly BMS alarms did not work in driver versions before `v1.0.20230531` and t
 
 ## Why is the battery current inverted?
 
-Some Daly BMS send the current as inverted value. This can be corrected by setting `INVERT_CURRENT_MEASUREMENT` to `-1` in the `utils.py` or `config.ini` (depending on the installed driver version). See [How to edit `utils.py` or `config.ini`](../general/install.md#how-to-edit-utilspy-or-configini).
+Some Daly BMS send the current as inverted value. This can be corrected by setting `INVERT_CURRENT_MEASUREMENT` to `-1` in the `config.ini`. See [How to edit the `config.ini`](../general/install.md#how-to-edit-the-configini).
 
 ## What can I do, if the BMS communication is unstable?
 
@@ -286,20 +275,7 @@ You can remove the GUI changes or update your GX firmware to solve this.
 
 ### Remove GUI changes
 
-Execute the command (matching your driver version) below to restore the GUI.
-
-If you don't know which version of the driver you have installed then try first the option for `>= v1.0.0`. If you get the error `bash: /data/etc/dbus-serialbattery/restore-gui.sh: No such file or directory` try the option for `<= v0.14.3`.
-
-#### Driver version `<= v0.14.3`
-
-```bash
-# restore original qml
-cp -f /opt/victronenergy/gui/qml/PageBattery.qml.backup /opt/victronenergy/gui/qml/PageBattery.qml
-# restart gui
-svc -d /service/gui && sleep 1 && svc -u /service/gui
-```
-
-#### Driver version `>= v1.0.0`
+Execute the command below to restore the GUI.
 
 ```bash
 bash /data/etc/dbus-serialbattery/restore-gui.sh
@@ -338,7 +314,3 @@ sed -i 's/\r//' /data/etc/dbus-serialbattery/service/log/run
 ```
 
 Now reboot the device. If this doesn't help, then download/unpack and reinstall the driver again.
-
-## `tar: conf/serial-starter.d: Cannot open: File exists`
-
-See [this page](../general/install.md#downgrade-from--v100-to--v0143).

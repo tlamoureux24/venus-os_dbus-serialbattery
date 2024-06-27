@@ -14,7 +14,7 @@ toc_max_heading_level: 4
 
 * If you think it could be a bug and you did not already tested the `nightly` build, then install it and see if the error persists. See [here](../general/install.md#nightly-build) how to install it.
 
-* If the logs don't give you enough valuable data, then change the logging from `INFO` to `DEBUG` in the config file. See [here](../general/install.md#how-to-edit-utilspy-or-configini) how to edit the `config.ini`.
+* If the logs don't give you enough valuable data, then change the logging from `INFO` to `DEBUG` in the config file. See [here](../general/install.md#how-to-edit-the-configini) how to edit the `config.ini`.
 
 
 ## How the driver works

@@ -67,6 +67,8 @@ In [VRM](https://vrm.victronenergy.com/) look under the device list for your ins
 
 ### Install or update automatically with USB/SD card
 
+> 🚨 IMPORTANT! Read the [changelog](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/master/CHANGELOG.md) BEFORE updating to a new version.
+
 > It might be, that this doesn't work on older CerboGX devices. In this case use SSH option instead.
 
 1. Download and copy the [latest release](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) `venus-data.tar.gz` to the root of a USB flash drive that is in FAT32 format (a SD card is also an option for GX devices, but not for Raspberry Pi).
@@ -81,6 +83,8 @@ In [VRM](https://vrm.victronenergy.com/) look under the device list for your ins
 
 
 ### Install or update over SSH
+
+> 🚨 IMPORTANT! Read the [changelog](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/master/CHANGELOG.md) BEFORE updating to a new version.
 
 > Require [root access](https://www.victronenergy.com/live/ccgx:root_access#root_access)
 

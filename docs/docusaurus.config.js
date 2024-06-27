@@ -100,6 +100,11 @@ const config = {
                         position: 'left',
                     },
                     {
+                        label: 'Changelog',
+                        href: `https://github.com/${organizationName}/${projectName}/blob/master/CHANGELOG.md`,
+                        position: 'left',
+                    },
+                    {
                         label: 'GitHub',
                         href: `https://github.com/${organizationName}/${projectName}`,
                         position: 'left',
