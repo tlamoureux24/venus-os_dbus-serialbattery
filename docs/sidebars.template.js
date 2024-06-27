@@ -21,7 +21,7 @@ const sidebars = {
     },
     {
       type: 'html',
-      value: '<small>Docs were updated on yyyy.mm.dd HH:ii (UTC)</small>', // The HTML to be rendered
+      value: '<small class="menu__docs_version">Docs were updated on yyyy.mm.dd HH:ii (UTC)</small>', // The HTML to be rendered
       defaultStyle: true, // Use the default menu item styling
     },
   ],

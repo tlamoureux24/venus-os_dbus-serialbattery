@@ -44,6 +44,23 @@ blockquote {
   height: .9em !important;
 }
 
+@media (max-width: 996px) {
+  .menu__docs_version {
+    padding: var(--ifm-menu-link-padding-vertical) 0 var(--ifm-menu-link-padding-vertical) var(--ifm-menu-link-padding-horizontal);
+  }
+  .menu__select_driver_version {
+    padding: var(--ifm-menu-link-padding-vertical) 0 var(--ifm-menu-link-padding-vertical) var(--ifm-menu-link-padding-horizontal);
+  }
+}
+
+@media (min-width: 997px) {
+  .menu__select_driver_version {
+    position: relative;
+    right: -1em;
+    padding: var(--ifm-menu-link-padding-vertical) 0 var(--ifm-menu-link-padding-vertical) var(--ifm-menu-link-padding-horizontal);
+  }
+}
+
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme="dark"] {
   --ifm-color-primary: #25c2a0;

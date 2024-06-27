@@ -48,7 +48,15 @@ const config = {
                     editUrl: ({ docPath }) => {
                         return `https://holocron.so/github/pr/mr-manuel/venus-os_dbus-serialbattery/docusaurus/editor/docs/docs/${docPath}`
                     },
-                    sidebarCollapsible: false
+                    sidebarCollapsible: false,
+                    versions: {
+                        current: {
+                            label: 'v1.4.x-dev 🌜',
+                            //path: 'docs',
+                            banner: 'none',  // none, unreleased, unmaintained
+                            //badge: true,  // true, false
+                        },
+                    },
                 },
                 theme: {
                     customCss: require.resolve('./src/css/custom.css'),
@@ -92,6 +100,11 @@ const config = {
                         position: 'left',
                     },
                     {
+                        label: 'GitHub',
+                        href: `https://github.com/${organizationName}/${projectName}`,
+                        position: 'left',
+                    },
+                    {
                         label: 'GitHub Issues',
                         href: `https://github.com/${organizationName}/${projectName}/issues?q=is%3Aissue`,
                         position: 'left',
@@ -102,9 +115,15 @@ const config = {
                         position: 'left',
                     },
                     {
-                        label: 'GitHub',
-                        href: `https://github.com/${organizationName}/${projectName}`,
+                        type: 'html',
                         position: 'right',
+                        value: '<span class="menu__select_driver_version">Select driver version:</span>',
+                    },
+                    {
+                        type: 'docsVersionDropdown',
+                        position: 'right',
+                        // dropdownItemsAfter: [{to: '/versions', label: 'All versions'}],
+                        dropdownActiveClassDisabled: true,
                     },
                 ],
             },
