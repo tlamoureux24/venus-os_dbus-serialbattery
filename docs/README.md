@@ -1,50 +1,73 @@
-# Website
+# dbus-serialbattery documentation
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+This documentation is built using [Docusaurus 3](https://docusaurus.io/), a modern static website generator.
+
+It can be found at https://mr-manuel.github.io/venus-os_dbus-serialbattery.
 
 ## Contribution
 
-To contribute to the documentation you have to fork this repository, edit/add the content in `docs` and then open a pull request to merge your changes.
+To contribute to this documentation you have to fork this repository, add or edit the content in the `docs` folder of the `docusaurus` branch and then open a pull request to merge your changes.
 
 ## Local Development
+
+This command installs all missing dependencies:
 
 ```bash
 yarn
 ```
 
-This command installs all missing dependencies.
-
 ### Build
+
+This command generates static content into the `build` directory and can be served using any static contents hosting service:
 
 ```bash
 yarn build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+### Start local server
 
-## Start local server
+This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server:
+
+```bash
+npm run serve
+```
+
+OR
 
 ```bash
 yarn start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+but with `yarn` not everything seems to work.
 
+## Create a new documentation version
 
-## Upgrade Docusaurus to the latest version
+This command creates a new version of the documentation. This allows to match the documentation always to the current version of the driver.
+
+```bash
+yarn docusaurus docs:version 1.1.0
+```
+
+For more informations see https://docusaurus.io/docs/versioning.
+
+### Upgrade Docusaurus to the latest version
+
+This command updates Docusaurus to the latest version:
 
 ```bash
 yarn upgrade @docusaurus/core@latest @docusaurus/preset-classic@latest
 ```
 
-This command updates Docusaurus to the latest version.
+## Possible problems and resolutions
 
-## Install yarn if not installed
+### `yarn` command not found
+
+Install it by executing this command:
 
 ```bash
 npm install --global yarn
 ```
 
-## Install npm if not installed
+### `npm` command not found
 
 Download and install it from [nodejs.org](https://nodejs.org/en).
