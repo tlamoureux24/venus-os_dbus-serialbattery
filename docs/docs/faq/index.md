@@ -250,9 +250,21 @@ Most unstable communications arise due to:
 * Cheap USB Hubs: Make sure you are using a qualitative USB Hub with enough power.
 * Raspberry Pi: Do not use a charger for powering the Raspberry Pi. Instead buy a power supply with enough power.
 
+## How to troubleshoot high CPU load?
+
+The easiest way to troubleshoot high CPU load is to use `htop`. Since `htop` is not available on Venus OS you have to install it first. See [here](https://github.com/mr-manuel/venus-os_helpful-scripts/tree/master/htop/armv7).
+
+Once installed open `htop` and sort by CPU time. To do this press `F6`, then select `Time`and hit `Enter`. Now the process that uses the most CPU time is at the top.
+
+Top exit `htop` press `q` or `CTRL + C`. After exiting you will see a few warnings, which you can ignore.
+
 ## Why do I have a high CPU usage after installing the driver?
 
-The driver polls a lot of data every second (for most BMS), which also has to be elaborated. Additionaly the more BMS and USB to serial adapter you have connected, the bigger the load. If your system cannot handle this and reboots often (check with `uptime`), try to set the `POLL_INTERVAL` in the `config.ini` to `2` and then increase this value by one, until the CPU overload is fixed. Keep in mind, that the battery data is then refreshed less often and the system can become unstable.
+The driver polls a lot of data every second (for most BMS), which also has to be elaborated. Additionaly the more BMS and USB to serial adapter you have connected, the bigger the load.
+
+If your system cannot handle this and reboots often (check with `uptime` how long the system is up), try to set the `POLL_INTERVAL` in the `config.ini` to `2` and then increase this value by `1`, until the CPU overload is fixed. `POLL_INTERVAL` defines how often the data is polled from the BMS.
+
+Keep in mind, that the battery data is then refreshed less often and which can cause system instabilities. In this case you have to try and see which value works best for you.
 
 
 ## How can I reset the SOC to 100%?
