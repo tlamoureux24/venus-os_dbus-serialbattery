@@ -1,7 +1,7 @@
 ---
 id: install
 title: How to install, update, disable, enable and uninstall
-sidebar_position: 4
+sidebar_position: 5
 # Display h2 to h4 headings
 toc_min_heading_level: 2
 toc_max_heading_level: 4
