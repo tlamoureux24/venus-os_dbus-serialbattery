@@ -62,7 +62,7 @@ class MNB(Battery):
         self.voltage = 26
         self.charger_connected = None
         self.load_connected = None
-        self.command_address = address
+        self.address = address
         self.cell_min_voltage = 3.3
         self.cell_max_voltage = 3.3
         self.soc = 50

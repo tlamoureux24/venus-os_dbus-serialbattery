@@ -13,7 +13,7 @@ class Renogy(Battery):
         self.type = self.BATTERYTYPE
 
         # The RBT100LFP12SH-G1 uses 0xF7, another battery uses 0x30
-        self.command_address = address
+        self.address = address
 
     BATTERYTYPE = "Renogy"
     LENGTH_CHECK = 4
@@ -228,7 +228,7 @@ class Renogy(Battery):
         return struct.pack("<H", crc)
 
     def generate_command(self, command):
-        buffer = bytearray(self.command_address)
+        buffer = bytearray(self.address)
         buffer += self.command_read
         buffer += command
         buffer += self.calc_crc(buffer)

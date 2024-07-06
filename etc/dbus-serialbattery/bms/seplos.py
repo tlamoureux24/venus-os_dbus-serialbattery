@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+# Notes
+# Added by https://github.com/wollew
+# https://github.com/Louisvdw/dbus-serialbattery/pull/530
+
 from battery import Protection, Battery, Cell
 from utils import logger
 import utils
@@ -7,8 +12,9 @@ import sys
 
 
 class Seplos(Battery):
-    def __init__(self, port, baud, address=0x00):
+    def __init__(self, port, baud, address):
         super(Seplos, self).__init__(port, baud, address)
+        self.address = address
         self.type = self.BATTERYTYPE
         self.poll_interval = 5000
 
@@ -140,7 +146,7 @@ class Seplos(Battery):
     def read_alarm_data(self):
         logger.debug("read alarm data")
         data = self.read_serial_data_seplos(
-            self.encode_cmd(address=0x00, cid2=self.COMMAND_ALARM, info=b"01")
+            self.encode_cmd(self.address, cid2=self.COMMAND_ALARM, info=b"01")
         )
         # check if we could successfully read data and we have the expected length of 98 bytes
         if data is False or len(data) != 98:
@@ -207,7 +213,7 @@ class Seplos(Battery):
         logger.debug("read status data")
 
         data = self.read_serial_data_seplos(
-            self.encode_cmd(address=0x00, cid2=0x42, info=b"01")
+            self.encode_cmd(self.address, cid2=0x42, info=b"01")
         )
 
         # check if reading data was successful and has the expected data length of 150 byte

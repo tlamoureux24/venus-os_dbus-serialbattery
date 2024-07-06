@@ -8,14 +8,15 @@ import re
 import sys
 
 
-class Lifepower(Battery):
+class EG4_Lifepower(Battery):
     def __init__(self, port, baud, address):
-        super(Lifepower, self).__init__(port, baud, address)
+        super(EG4_Lifepower, self).__init__(port, baud, address)
         self.type = self.BATTERYTYPE
+        self.address = address
+        self.command_general = b"\x7E" + address + b"\x01\x00\xFE\x0D"
+        self.command_hardware_version = b"\x7E" + address + b"\x42\x00\xFC\x0D"
+        self.command_firmware_version = b"\x7E" + address + b"\x33\x00\xFE\x0D"
 
-    command_general = b"\x7E\x01\x01\x00\xFE\x0D"
-    command_hardware_version = b"\x7E\x01\x42\x00\xFC\x0D"
-    command_firmware_version = b"\x7E\x01\x33\x00\xFE\x0D"
     balancing = 0
     BATTERYTYPE = "EG4 Lifepower"
     LENGTH_CHECK = 5
