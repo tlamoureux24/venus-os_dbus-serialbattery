@@ -33,6 +33,8 @@ Works also for:
 #### |- [Revov](https://revov.co.za/)
 #### |- [Tian Power](https://www.tian-power.com)
 
+### &bull; [EG4](https://eg4electronics.com/) LL
+
 ### &bull; [Heltec Modbus SmartBMS](https://heltec-bms.com) / [YanYang BMS](http://en.yybms.com)
 Communication to the Heltec SmartBMS (which is a rebranded YYBMS) via Modbus/RS485.
 
@@ -52,6 +54,8 @@ Bluetooth connection supported <img src="/venus-os_dbus-serialbattery/img/blueto
 
 Works also for:
 #### |- [Heltec BMS](https://heltec-bms.com)
+
+### &bull; [JKBMS](https://www.jkbms.com) PB Model (also know as JK Inverter BMS)
 
 ### &bull; MNB spi BMS
 Disabled by default as it requires additional manual steps to install.
