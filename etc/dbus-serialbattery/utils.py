@@ -37,7 +37,7 @@ def _get_list_from_config(
 
 
 # Constants
-DRIVER_VERSION = "1.4.20240705modbus"
+DRIVER_VERSION = "1.4.20240710modbus"
 zero_char = chr(48)
 degree_sign = "\N{DEGREE SIGN}"
 

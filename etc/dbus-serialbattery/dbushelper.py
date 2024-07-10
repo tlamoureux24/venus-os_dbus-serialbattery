@@ -33,7 +33,7 @@ class SessionBus(dbus.bus.BusConnection):
         return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SESSION)
 
 
-def get_dbus() -> dbus.bus.BusConnection:
+def get_bus() -> dbus.bus.BusConnection:
     return SessionBus() if "DBUS_SESSION_BUS_ADDRESS" in os.environ else SystemBus()
 
 
@@ -49,10 +49,9 @@ class DbusHelper:
         self._dbusname = (
             "com.victronenergy.battery."
             + self.battery.port[self.battery.port.rfind("/") + 1 :]
-            + ("__" + str(bms_address) if utils.MODBUS_ADDRESSES else "")
+            + ("__" + str(bms_address) if bms_address is not None else "")
         )
-        logger.info(f"dbusname_post = {self._dbusname}")
-        self._dbusservice = VeDbusService(self._dbusname, get_dbus())
+        self._dbusservice = VeDbusService(self._dbusname, get_bus())
         self.bms_id = "".join(
             # remove all non alphanumeric characters from the identifier
             c if c.isalnum() else "_"
@@ -164,13 +163,13 @@ class DbusHelper:
 
         # prepare settings class
         self.settings = SettingsDevice(
-            get_dbus(), self.EMPTY_DICT, self.handle_changed_setting
+            get_bus(), self.EMPTY_DICT, self.handle_changed_setting
         )
         logger.debug("setup_instance(): SettingsDevice")
 
         # get all the settings from the dbus
         settings_from_dbus = self.getSettingsWithValues(
-            get_dbus(),
+            get_bus(),
             "com.victronenergy.settings",
             "/Settings/Devices",
         )
@@ -271,7 +270,6 @@ class DbusHelper:
                                     "AllowMaxVoltage could not be converted to type int: "
                                     + str(value["AllowMaxVoltage"])
                                 )
-                                pass
 
                         # check if the battery has CustomName set
                         if "CustomName" in value and value["CustomName"] != "":
@@ -295,7 +293,6 @@ class DbusHelper:
                                     "MaxVoltageStartTime could not be converted to type int: "
                                     + str(value["MaxVoltageStartTime"])
                                 )
-                                pass
 
                         # check if the battery has SocCalc set
                         # load SOC from dbus only if SOC_CALCULATION is enabled
@@ -315,7 +312,6 @@ class DbusHelper:
                                         "SocCalc could not be converted to type float: "
                                         + str(value["SocCalc"])
                                     )
-                                    pass
                             else:
                                 logger.debug("Soc_calc not found in dbus")
 
@@ -337,7 +333,6 @@ class DbusHelper:
                                     "SocResetLastReached could not be converted to type int: "
                                     + str(value["SocResetLastReached"])
                                 )
-                                pass
 
                     # check the last seen time and remove the battery it it was not seen for 30 days
                     elif "LastSeen" in value and int(value["LastSeen"]) < int(
@@ -345,7 +340,7 @@ class DbusHelper:
                     ) - (60 * 60 * 24 * 30):
                         # remove entry
                         del_return = self.removeSetting(
-                            get_dbus(),
+                            get_bus(),
                             "com.victronenergy.settings",
                             "/Settings/Devices/" + key,
                             [
@@ -366,7 +361,7 @@ class DbusHelper:
                     # check if the battery has a last seen time, if not then it's an old entry and can be removed
                     elif "LastSeen" not in value:
                         del_return = self.removeSetting(
-                            get_dbus(),
+                            get_bus(),
                             "com.victronenergy.settings",
                             "/Settings/Devices/" + key,
                             ["ClassAndVrmInstance"],
@@ -384,7 +379,7 @@ class DbusHelper:
                         and "ClassAndVrmInstance" not in value
                     ):
                         del_return = self.removeSetting(
-                            get_dbus(),
+                            get_bus(),
                             "com.victronenergy.settings",
                             "/Settings/Devices/" + key,
                             ["CustomName", "Enabled", "TemperatureType"],
@@ -458,7 +453,7 @@ class DbusHelper:
         # update last seen
         if found_bms:
             self.setSetting(
-                get_dbus(),
+                get_bus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "LastSeen",
@@ -919,6 +914,8 @@ class DbusHelper:
 
         # Update battery extras
         self._dbusservice["/State"] = self.battery.state
+        # https://github.com/victronenergy/veutil/blob/master/inc/veutil/ve_regs_payload.h
+        # https://github.com/victronenergy/veutil/blob/master/src/qt/bms_error.cpp
         self._dbusservice["/ErrorCode"] = self.battery.error_code
         self._dbusservice["/History/ChargeCycles"] = self.battery.cycles
         self._dbusservice["/History/TotalAhDrawn"] = self.battery.total_ah_drawn
@@ -1084,7 +1081,6 @@ class DbusHelper:
                     "Non blocking exception occurred: "
                     + f"{repr(exception_object)} of type {exception_type} in {file} line #{line}"
                 )
-                pass
 
         # Update TimeToGo and/or TimeToSoC
         try:
@@ -1163,7 +1159,6 @@ class DbusHelper:
                 "Non blocking exception occurred: "
                 + f"{repr(exception_object)} of type {exception_type} in {file} line #{line}"
             )
-            pass
 
         # save settings every 15 seconds to dbus
         if int(time()) % 15:
@@ -1284,7 +1279,7 @@ class DbusHelper:
     # save custom name to dbus
     def custom_name_callback(self, path, value) -> str:
         result = self.setSetting(
-            get_dbus(),
+            get_bus(),
             "com.victronenergy.settings",
             self.path_battery,
             "CustomName",
@@ -1304,7 +1299,7 @@ class DbusHelper:
             != self.save_charge_details_last["allow_max_voltage"]
         ):
             result = result + self.setSetting(
-                get_dbus(),
+                get_bus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "AllowMaxVoltage",
@@ -1323,7 +1318,7 @@ class DbusHelper:
             != self.save_charge_details_last["max_voltage_start_time"]
         ):
             result = result and self.setSetting(
-                get_dbus(),
+                get_bus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "MaxVoltageStartTime",
@@ -1343,7 +1338,7 @@ class DbusHelper:
 
         if self.battery.soc_calc != self.save_charge_details_last["soc_calc"]:
             result = result and self.setSetting(
-                get_dbus(),
+                get_bus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "SocCalc",
@@ -1357,7 +1352,7 @@ class DbusHelper:
             != self.save_charge_details_last["soc_reset_last_reached"]
         ):
             result = result and self.setSetting(
-                get_dbus(),
+                get_bus(),
                 "com.victronenergy.settings",
                 self.path_battery,
                 "SocResetLastReached",

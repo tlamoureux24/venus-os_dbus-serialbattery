@@ -53,6 +53,9 @@ updates the fields of Battery. It then publishes those fields to dbus using `dbu
 
 For more details on the Victron dbus interface see [the official victron dbus documentation](https://github.com/victronenergy/venus/wiki/dbus)
 
+## Join the community on Discord
+https://discord.gg/YXzFB8rSgx
+
 ## GUIv2
 
 To use dbus-serialbattery already with GUIv2 see here: https://github.com/mr-manuel/venus-os_dbus-serialbattery_gui-v2

@@ -676,7 +676,12 @@ class Battery(ABC):
                     + f"voltage_cell_diff: {voltage_cell_diff:.3f} V\n"
                     + f"max_cell_voltage: {self.get_max_cell_voltage()} V • penalty_sum: {penalty_sum:.3f} V\n"
                     + f"soc: {self.soc}% • soc_calc: {self.soc_calc}%\n"
-                    + f"current: {self.current:.2f}A • current_corrected: {self.current_corrected:.2f} A • "
+                    + f"current: {self.current:.2f}A"
+                    + (
+                        f" • current_corrected: {self.current_corrected:.2f} A • "
+                        if self.current_corrected is not None
+                        else ""
+                    )
                     + (
                         f"current_external: {self.current_external:.2f} A\n"
                         if self.current_external is not None
@@ -685,7 +690,8 @@ class Battery(ABC):
                     + f"current_time: {current_time}\n"
                     + f"linear_cvl_last_set: {self.linear_cvl_last_set}\n"
                     + f"charge_fet: {self.charge_fet} • control_allow_charge: {self.control_allow_charge}\n"
-                    + f"discharge_fet: {self.discharge_fet} • control_allow_discharge: {self.control_allow_discharge}\n"
+                    + f"discharge_fet: {self.discharge_fet} • "
+                    + f"control_allow_discharge: {self.control_allow_discharge}\n"
                     + f"block_because_disconnect: {self.block_because_disconnect}\n"
                     + "soc_reset_last_reached: "
                     + (
@@ -694,7 +700,11 @@ class Battery(ABC):
                         else f"{soc_reset_days_ago}"
                     )
                     + f" d ago, next in {soc_reset_in_days} d\n"
-                    + f"soc_calc_capacity_remain: {self.soc_calc_capacity_remain:.3f}/{self.capacity} Ah\n"
+                    + (
+                        f"soc_calc_capacity_remain: {self.soc_calc_capacity_remain:.3f}/{self.capacity} Ah\n"
+                        if self.soc_calc_capacity_remain is not None
+                        else ""
+                    )
                     + "soc_calc_reset_starttime: "
                     + (
                         f"{int(current_time - self.soc_calc_reset_starttime)}/{utils.SOC_RESET_TIME}"
@@ -730,8 +740,22 @@ class Battery(ABC):
                 )
 
         except TypeError:
-            self.control_voltage = None
-            self.charge_mode = "--"
+            self.control_voltage = round(
+                (utils.FLOAT_CELL_VOLTAGE * self.cell_count), 2
+            )
+            self.charge_mode = "Error, please check the logs!"
+
+            # set state to error, to show in the GUI that something is wrong
+            self.state = 10
+            self.error_code = 8
+
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            file = exception_traceback.tb_frame.f_code.co_filename
+            line = exception_traceback.tb_lineno
+            logger.error(
+                "Non blocking exception occurred: "
+                + f"{repr(exception_object)} of type {exception_type} in {file} line #{line}"
+            )
 
     def set_cvl_linear(self, control_voltage: float) -> bool:
         """
@@ -865,7 +889,12 @@ class Battery(ABC):
                     + f"voltage_cell_diff: {voltage_cell_diff:.3f} V\n"
                     + f"max_cell_voltage: {self.get_max_cell_voltage()} V\n"
                     + f"soc: {self.soc}% • soc_calc: {self.soc_calc}%\n"
-                    + f"current: {self.current:.2f}A • current_corrected: {self.current_corrected:.2f} A • "
+                    + f"current: {self.current:.2f}A"
+                    + (
+                        f" • current_corrected: {self.current_corrected:.2f} A • "
+                        if self.current_corrected is not None
+                        else ""
+                    )
                     + (
                         f"current_external: {self.current_external:.2f} A\n"
                         if self.current_external is not None
@@ -874,7 +903,8 @@ class Battery(ABC):
                     + f"current_time: {current_time}\n"
                     + f"linear_cvl_last_set: {self.linear_cvl_last_set}\n"
                     + f"charge_fet: {self.charge_fet} • control_allow_charge: {self.control_allow_charge}\n"
-                    + f"discharge_fet: {self.discharge_fet} • control_allow_discharge: {self.control_allow_discharge}\n"
+                    + f"discharge_fet: {self.discharge_fet} • "
+                    + f"control_allow_discharge: {self.control_allow_discharge}\n"
                     + f"block_because_disconnect: {self.block_because_disconnect}\n"
                     + "soc_reset_last_reached: "
                     + (
@@ -883,7 +913,11 @@ class Battery(ABC):
                         else f"{soc_reset_days_ago}"
                     )
                     + f" d ago, next in {soc_reset_in_days} d\n"
-                    + f"soc_calc_capacity_remain: {self.soc_calc_capacity_remain:.3f}/{self.capacity} Ah\n"
+                    + (
+                        f"soc_calc_capacity_remain: {self.soc_calc_capacity_remain:.3f}/{self.capacity} Ah\n"
+                        if self.soc_calc_capacity_remain is not None
+                        else ""
+                    )
                     + "soc_calc_reset_starttime: "
                     + (
                         f"{int(current_time - self.soc_calc_reset_starttime)}/{utils.SOC_RESET_TIME}"
@@ -911,8 +945,22 @@ class Battery(ABC):
                 )
 
         except TypeError:
-            self.control_voltage = None
-            self.charge_mode = "--"
+            self.control_voltage = round(
+                (utils.FLOAT_CELL_VOLTAGE * self.cell_count), 2
+            )
+            self.charge_mode = "Error, please check the logs!"
+
+            # set state to error, to show in the GUI that something is wrong
+            self.state = 10
+            self.error_code = 8
+
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            file = exception_traceback.tb_frame.f_code.co_filename
+            line = exception_traceback.tb_lineno
+            logger.error(
+                "Non blocking exception occurred: "
+                + f"{repr(exception_object)} of type {exception_type} in {file} line #{line}"
+            )
 
     def manage_charge_current(self) -> None:
         """
