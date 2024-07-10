@@ -154,7 +154,7 @@ Run the [install script](#install-or-update-over-ssh) and select `4`.
 
 #### Specific version/troubleshooting option
 
-Run the [install script](#install-or-update-over-ssh) and select `5`. Go to [releases](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) or [releases](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) and copy the link to the `venus-data.tar.gz` version you like to install. Paste the link with a right click and press enter.
+Run the [install script](#install-or-update-over-ssh) and select `5`. Go to [releases](https://github.com/mr-manuel/venus-os_dbus-serialbattery/releases) and copy the link to the `venus-data.tar.gz` version you like to install. Paste the link with a right click and press enter.
 
 💡 Reboot the system after the installation finished with `reboot`.
 
