@@ -9,15 +9,16 @@ toc_max_heading_level: 4
 
 # How to install, update, disable, enable and uninstall
 
-## 🚨 NB! Before you begin
+## 🚨 NB! Before you begin 🚨
 
 > The driver does not do any setup of your BMS/battery. You need to have a working battery before you start.
 
-> It is always recommended to use the latest Venus OS version with the latest driver version. To avoid a [white screen](../faq/index.md#fix-white-screen-after-install) after install check the compatibility matrix below.
-
-> Multi battery setup: If you are using multiple batteries you need to use a battery aggregator else you cannot use the full system power. See [How to aggregate multiple batteries?](../faq/index.md#how-to-aggregate-multiple-batteries)
+> **Multi battery setup**<br />
+> In Venus OS only one battery can be selected for controlling CVL, CCL and DCL. This battery then controls the whole system. Also for displaying the battery values in the overview (GUI and VRM) only one battery can be selected. Therefore you need to use a battery aggregator. See [How to aggregate multiple batteries?](../faq/index.md#how-to-aggregate-multiple-batteries)
 
 > The Bluetooth and CAN connections are still not stable on some systems. If you want to have a stable connection use the serial connection.
+
+> It is always recommended to use the latest Venus OS version with the latest driver version. To avoid a [white screen](../faq/index.md#fix-white-screen-after-install) after install check the compatibility matrix below.
 
 ## Compatibility Matrix
 
