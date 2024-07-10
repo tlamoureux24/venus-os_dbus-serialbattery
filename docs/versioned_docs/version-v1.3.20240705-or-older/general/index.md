@@ -25,6 +25,9 @@ If you are using this driver and you are happy with it, please make a donation t
 
 [<img src="https://github.md0.eu/uploads/donate-button.svg" style={{width: '178px', height: '38px'}} />](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
 
+## Join the community on Discord
+https://discord.gg/YXzFB8rSgx
+
 ## Requirements
 
 * GX device or Raspberry Pi running Venus OS version `v2.80` or later.
