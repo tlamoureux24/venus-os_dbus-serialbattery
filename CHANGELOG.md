@@ -6,11 +6,15 @@
 
 ## Breaking changes
 
-* Driver version greater or equal to `v1.3.20240625beta`
+* Driver version greater or equal to `v1.4.20240714dev`
+
+  * Changes to `config.default.ini`: `HELTEC_MODBUS_ADDR` was replaced by `MODBUS_ADDRESSES`.
+
+* Driver version greater or equal to `v1.3.20240625dev`
 
   * `Lifepower` was renamed to `EG4_Lifepower`. You need to change it, if you have specified it in the `config.ini`.
 
-* Driver version greater or equal to `v1.2.20240219beta`
+* Driver version greater or equal to `v1.2.20240219dev`
 
   * The temperature limitation variables where changed to match the other variable names.
 
@@ -39,19 +43,19 @@
     `SOC_WHILE_CHARGING`, `MAX_CHARGE_CURRENT_SOC_FRACTION`, `SOC_WHILE_DISCHARGING`, `MAX_DISCHARGE_CURRENT_SOC_FRACTION`
 
 
-* Driver version greater or equal to `v1.1.20231223beta`
+* Driver version greater or equal to `v1.1.20231223dev`
 
   * `PUBLISH_CONFIG_VALUES` now has to be True or False
 
 
-* Driver version greater or equal to `v1.0.20231128beta`
+* Driver version greater or equal to `v1.0.20231128dev`
 
   * The custom name is not saved to the config file anymore, but to the dbus service com.victronenergy.settings. You have to re-enter it once.
 
   * If you selected a specific device in `Settings -> System setup -> Battery monitor` and/or `Settings -> DVCC -> Controlling BMS` you have to reselect it.
 
 
-* Driver version greater or equal to `v1.0.20230629beta` and smaller or equal to `v1.0.20230926beta`:
+* Driver version greater or equal to `v1.0.20230629dev` and smaller or equal to `v1.0.20230926dev`:
 
   With `v1.0.20230927beta` the following values changed names:
   * `BULK_CELL_VOLTAGE` -> `SOC_RESET_VOLTAGE`
@@ -61,9 +65,15 @@
 ## v1.4.x
 
 * Added: Automatically increase polling time, if polling take too long by @mr-manuel
+* Added: History() class that holds all BMS history values by @mr-manuel
 * Added: Multiple BMS on one USB to RS485/Modbus adapter now possible. The BMS needs to be able to set different addresses to each battery by @mr-manuel
+* Changed: Fixed how `velib_python` was integrated in this driver by @mr-manuel
+* Changed: Fixed problem with battery status and error code by @mr-manuel
+* Changed: JKBMS BLE - Fixes wrong max battery voltage https://github.com/Louisvdw/dbus-serialbattery/issues/1094 by @mr-manuel
 * Changed: JKBMS PB Model fixes by @KoljaWindeler
-
+* Changed: Reworked, documented and cleaned up a lot of code by @mr-manuel
+* Changed: The setting `HELTEC_MODBUS_ADDR` was replaced by `MODBUS_ADDRESSES` in the `config.default.ini` by @mr-manuel
+* Changed: Updated `battery_template.py` and added tons of descriptions by @mr-manuel
 
 ## v1.3.20240705
 

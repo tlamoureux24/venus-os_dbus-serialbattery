@@ -136,7 +136,7 @@ class MNB(Battery):
         self.T_C_min = 15
         self.max_battery_voltage = self.V_C_max * self.cell_count
         self.min_battery_voltage = self.V_C_min * self.cell_count
-        self.hardware_version = "MNB_BMS " + str(self.cell_count) + " cells"
+        self.hardware_version = "MNB_BMS " + str(self.cell_count) + "S"
         self.poll_interval = 1000  # scan repeat time, ms
         for c in range(self.cell_count):
             self.cells.append(Cell(False))
@@ -151,7 +151,7 @@ class MNB(Battery):
         # used once in init...
         self.charger_connected = True
         self.load_connected = True
-        self.cycles = None
+        self.history.charge_cycles = None
 
         return True
 

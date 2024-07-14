@@ -252,7 +252,6 @@ class LltJbd(Battery):
             "turn_balancing_off_callback",
         ]
 
-    # degree_sign = u'\N{DEGREE SIGN}'
     BATTERYTYPE = "LLT/JBD"
     LENGTH_CHECK = 6
     LENGTH_POS = 3
@@ -296,23 +295,32 @@ class LltJbd(Battery):
     def get_settings(self):
         if not self.read_gen_data():
             return False
+
         self.max_battery_charge_current = utils.MAX_BATTERY_CHARGE_CURRENT
         self.max_battery_discharge_current = utils.MAX_BATTERY_DISCHARGE_CURRENT
+
         with self.eeprom(writable=False):
             cycle_cap = self.read_serial_data_llt(readCmd(REG_CYCLE_CAP))
+
             if cycle_cap:
                 self.cycle_capacity = float(unpack_from(">H", cycle_cap)[0])
+
             charge_over_current = self.read_serial_data_llt(readCmd(REG_CHGOC))
+
             if charge_over_current:
                 self.max_battery_charge_current = abs(
                     float(unpack_from(">h", charge_over_current)[0] / 100.0)
                 )
+
             discharge_over_current = self.read_serial_data_llt(readCmd(REG_DSGOC))
+
             if discharge_over_current:
                 self.max_battery_discharge_current = abs(
                     float(unpack_from(">h", discharge_over_current)[0] / -100.0)
                 )
+
             func_config = self.read_serial_data_llt(readCmd(REG_FUNC_CONFIG))
+
             if func_config:
                 self.func_config = unpack_from(">H", func_config)[0]
                 self.balance_fet = (self.func_config & FUNC_BALANCE_EN) != 0
@@ -328,13 +336,16 @@ class LltJbd(Battery):
 
         self.reset_soc = value
         self.soc_to_set = value
+
         return True
 
     def write_soc(self):
         if self.soc_to_set is None or self.soc_to_set != 100 or not self.voltage:
             return False
+
         logger.info(f"write soc {self.soc_to_set}%")
         self.soc_to_set = None  # Reset value, so we will set it only once
+
         # TODO implement logic to map current pack readings into
         # REG_CAP_100, REG_CAP_90, REG_CAP_80, REG_CAP_70, REG_CAP_60, ...
         with self.eeprom(writable=True):
@@ -440,9 +451,11 @@ class LltJbd(Battery):
 
         with self.eeprom():
             func_config = self.read_serial_data_llt(readCmd(REG_FUNC_CONFIG))
+
             if func_config:
                 self.func_config = unpack_from(">H", func_config)[0]
                 balancer_enabled = self.func_config & FUNC_BALANCE_EN
+
                 # Balance is enabled, force disable OR balancer is disabled and force enable
                 if (balancer_enabled != 0 and disable_balancer) or (
                     balancer_enabled == 0 and not disable_balancer
@@ -451,10 +464,12 @@ class LltJbd(Battery):
 
         if new_func_config:
             new_func_config_bytes = pack(">H", new_func_config)
+
             with self.eeprom(writable=True):
                 reply = self.read_serial_data_llt(
                     writeCmd(REG_FUNC_CONFIG, new_func_config_bytes)
                 )
+
                 if reply is False:
                     logger.error("write force disable balancer failed")
                     return False
@@ -470,7 +485,7 @@ class LltJbd(Battery):
         return self.read_gen_data() and self.read_cell_data()
 
     def to_protection_bits(self, byte_data):
-        tmp = bin(byte_data)[2:].rjust(13, utils.zero_char)
+        tmp = bin(byte_data)[2:].rjust(13, utils.ZERO_CHAR)
 
         self.protection.voltage_high = 2 if is_bit_set(tmp[10]) else 0
         self.protection.voltage_low = 2 if is_bit_set(tmp[9]) else 0
@@ -499,11 +514,11 @@ class LltJbd(Battery):
         # init the cell array once
         if len(self.cells) == 0:
             for _ in range(self.cell_count):
-                print("#" + str(_))
+                logger.debug("#" + str(_))
                 self.cells.append(Cell(False))
 
         # get up to the first 16 cells
-        tmp = bin(byte_data)[2:].rjust(min(self.cell_count, 16), utils.zero_char)
+        tmp = bin(byte_data)[2:].rjust(min(self.cell_count, 16), utils.ZERO_CHAR)
         # 4 cells
         # tmp = 0101
         # 16 cells
@@ -514,7 +529,7 @@ class LltJbd(Battery):
         # [cell1, cell2, cell3, ...]
 
         if self.cell_count > 16:
-            tmp2 = bin(byte_data_high)[2:].rjust(self.cell_count - 16, utils.zero_char)
+            tmp2 = bin(byte_data_high)[2:].rjust(self.cell_count - 16, utils.ZERO_CHAR)
             # tmp = 1100110011001100
             tmp_reversed = tmp_reversed + list(reversed(tmp2))
             # print(tmp_reversed) --> [
@@ -537,18 +552,18 @@ class LltJbd(Battery):
         for c in self.cells:
             self.cells.remove(c)
         # get up to the first 16 cells
-        tmp = bin(byte_data)[2:].rjust(min(self.cell_count, 16), utils.zero_char)
+        tmp = bin(byte_data)[2:].rjust(min(self.cell_count, 16), utils.ZERO_CHAR)
         for bit in reversed(tmp):
             self.cells.append(Cell(is_bit_set(bit)))
         # get any cells above 16
         if self.cell_count > 16:
-            tmp = bin(byte_data_high)[2:].rjust(self.cell_count - 16, utils.zero_char)
+            tmp = bin(byte_data_high)[2:].rjust(self.cell_count - 16, utils.ZERO_CHAR)
             for bit in reversed(tmp):
                 self.cells.append(Cell(is_bit_set(bit)))
         """
 
     def to_fet_bits(self, byte_data):
-        tmp = bin(byte_data)[2:].rjust(2, utils.zero_char)
+        tmp = bin(byte_data)[2:].rjust(2, utils.ZERO_CHAR)
         self.charge_fet = is_bit_set(tmp[1])
         self.discharge_fet = is_bit_set(tmp[0])
 
@@ -563,7 +578,7 @@ class LltJbd(Battery):
             current,
             capacity_remain,
             capacity,
-            self.cycles,
+            self.history.charge_cycles,
             self.production,
             balance,
             balance2,
@@ -574,11 +589,14 @@ class LltJbd(Battery):
             self.cell_count,
             self.temp_sensors,
         ) = unpack_from(">HhHHHHhHHBBBBB", gen_data)
+
         self.voltage = voltage / 100
         self.current = current / 100
+
         # https://github.com/Louisvdw/dbus-serialbattery/issues/769#issuecomment-1720805325
         if not self.cycle_capacity or self.cycle_capacity < capacity_remain:
             self.cycle_capacity = capacity
+
         self.soc = round(100 * capacity_remain / self.cycle_capacity, 2)
         self.capacity_remain = capacity_remain / 100
         self.capacity = capacity / 100

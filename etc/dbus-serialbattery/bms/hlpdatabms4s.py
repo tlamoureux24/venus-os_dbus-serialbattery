@@ -41,7 +41,7 @@ class HLPdataBMS4S(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         result = False

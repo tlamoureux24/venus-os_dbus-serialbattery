@@ -89,14 +89,14 @@ class Jkbms_Ble(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         st = self.jk.get_status()["settings"]
         self.cell_count = st["cell_count"]
         self.max_battery_charge_current = st["max_charge_current"]
         self.max_battery_discharge_current = st["max_discharge_current"]
-        self.max_battery_voltage = st["cell_ovp"] * self.cell_count
+        self.max_battery_voltage = utils.MAX_CELL_VOLTAGE * self.cell_count
         self.min_battery_voltage = st["cell_uvp"] * self.cell_count
 
         # Persist initial OVP and OPVR settings of JK BMS BLE
@@ -125,7 +125,7 @@ class Jkbms_Ble(Battery):
             + self.jk.get_status()["device_info"]["hw_rev"]
             + " "
             + str(self.cell_count)
-            + " cells"
+            + "S"
             + (" (" + self.production + ")" if self.production else "")
         )
         logger.info("BAT: " + self.hardware_version)
@@ -206,7 +206,7 @@ class Jkbms_Ble(Battery):
         self.voltage = round(st["cell_info"]["total_voltage"], 2)
 
         self.soc = st["cell_info"]["battery_soc"]
-        self.cycles = st["cell_info"]["cycle_count"]
+        self.history.charge_cycles = st["cell_info"]["cycle_count"]
 
         self.charge_fet = st["settings"]["charging_switch"]
         self.discharge_fet = st["settings"]["discharging_switch"]

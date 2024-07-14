@@ -49,7 +49,7 @@ class ANT(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         self.max_battery_charge_current = utils.MAX_BATTERY_CHARGE_CURRENT
@@ -96,8 +96,8 @@ class ANT(Battery):
         self.capacity_remain = capacity_remain[0] / 1000000
 
         total_ah_drawn = unpack_from(">L", status_data, 83)
-        self.total_ah_drawn = total_ah_drawn[0] / 1000
-        self.cycles = self.total_ah_drawn / self.capacity
+        self.history.total_ah_drawn = total_ah_drawn[0] / 1000
+        self.history.charge_cycles = self.history.total_ah_drawn / self.capacity
 
         self.charge_fet, self.discharge_fet, self.balancing = unpack_from(
             ">bbb", status_data, 103
@@ -105,7 +105,7 @@ class ANT(Battery):
 
         self.temp1, self.temp2 = unpack_from(">bxb", status_data, 96)
 
-        self.hardware_version = "ANT BMS " + str(self.cell_count) + " cells"
+        self.hardware_version = "ANT BMS " + str(self.cell_count) + "S"
 
         # Alarms
         self.protection.voltage_high = 2 if self.charge_fet == 2 else 0

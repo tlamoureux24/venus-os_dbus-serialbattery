@@ -196,8 +196,8 @@ class Seplosv3(Battery):
             self.capacity_remain = pia[2] / 100  # check if this is from pia or from spa
             #        self.capacity = pia[2]/100    # check if this is from pia or from spa
             self.soc = pia[5] / 10
-            self.total_ah_drawn = pia[4] * 10
-            self.cycles = pia[7]
+            self.history.total_ah_drawn = pia[4] * 10
+            self.history.charge_cycles = pia[7]
             self.max_battery_discharge_current = pia[0x0F]
             self.max_battery_charge_current = pia[0x10]
         except Exception as e:

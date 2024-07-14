@@ -381,7 +381,7 @@ def calc_Ah(Ai, self):
     SOH = (1 - cum_bp_kwh_out / Q_nom * 0.00005) * 100
     Q_act = Q_nom * SOH / 100
     Q_Cycles = cum_bp_kwh_out / Q_nom * 0.00005
-    self.cycles = Q_Cycles
+    self.history.charge_cycles = Q_Cycles
 
     if Ai > 0:
         Q_B_chg += dQ_Batt

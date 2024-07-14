@@ -34,7 +34,7 @@ class Revov(Battery):
         self.cell_max_no = None
         self.cell_count = 16
         self.cells = []
-        self.cycles = None
+        self.history.charge_cycles = None
 
     BATTERYTYPE = "Revov"
     LENGTH_CHECK = 0
@@ -73,7 +73,7 @@ class Revov(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
 
@@ -154,8 +154,8 @@ class Revov(Battery):
             self.voltage = self.voltage / 100
         logger.warn("Voltage Data: [" + str(self.voltage) + "v]")
 
-        self.cycles = unpack_from(">H", packet, 68)[0]
-        logger.warn("Battery Cycles: [" + str(self.cycles) + "]")
+        self.history.charge_cycles = unpack_from(">H", packet, 68)[0]
+        logger.warn("Battery Cycles: [" + str(self.history.charge_cycles) + "]")
 
         self.capacity = unpack_from(">H", packet, 44)[0]
         self.capacity = self.capacity / 100

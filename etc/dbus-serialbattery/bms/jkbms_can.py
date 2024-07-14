@@ -14,7 +14,7 @@ from utils import (
     MAX_CELL_VOLTAGE,
     MIN_CELL_VOLTAGE,
     JKBMS_CAN_CELL_COUNT,
-    zero_char,
+    ZERO_CHAR,
 )
 from struct import unpack_from
 import can
@@ -65,7 +65,7 @@ class Jkbms_Can(Battery):
         return self.read_status_data()
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         self.cell_count = JKBMS_CAN_CELL_COUNT
@@ -80,7 +80,7 @@ class Jkbms_Can(Battery):
             for c in range(missing_instances):
                 self.cells.append(Cell(False))
 
-        self.hardware_version = "JKBMS CAN " + str(self.cell_count) + " cells"
+        self.hardware_version = "JKBMS CAN " + str(self.cell_count) + "S"
         return True
 
     def refresh_data(self):
@@ -100,7 +100,7 @@ class Jkbms_Can(Battery):
         return True
 
     def to_fet_bits(self, byte_data):
-        tmp = bin(byte_data)[2:].rjust(2, zero_char)
+        tmp = bin(byte_data)[2:].rjust(2, ZERO_CHAR)
         self.charge_fet = is_bit_set(tmp[1])
         self.discharge_fet = is_bit_set(tmp[0])
 

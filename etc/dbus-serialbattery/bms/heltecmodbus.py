@@ -96,7 +96,6 @@ class HeltecModbus(Battery):
 
             if found:
                 self.type = "#" + str(self.address) + "_Heltec_Smart"
-                # break
 
         # give the user a feedback that no BMS was found
         if not found:

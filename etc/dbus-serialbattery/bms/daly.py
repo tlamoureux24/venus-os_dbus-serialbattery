@@ -232,7 +232,7 @@ class Daly(Battery):
                 self.charger_connected,
                 self.load_connected,
                 state,
-                self.cycles,
+                self.history.charge_cycles,
             ) = unpack_from(">bb??bhx", status_data)
         except Exception:
             return False
@@ -243,7 +243,7 @@ class Daly(Battery):
         self.hardware_version = (
             "DalyBMS "
             + str(self.cell_count)
-            + " cells"
+            + "S"
             + (" (" + self.production + ")" if self.production else "")
         )
         logger.debug(self.hardware_version)

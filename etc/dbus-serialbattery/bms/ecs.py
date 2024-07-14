@@ -99,7 +99,7 @@ class Ecs(Battery):
         return True if len(self.LiProCells) > 0 else False
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
 
@@ -140,7 +140,7 @@ class Ecs(Battery):
             )
 
             self.hardware_version = (
-                "Greenmeter-" + self.METER_SIZE + " " + str(self.cell_count) + " cells"
+                "Greenmeter-" + self.METER_SIZE + " " + str(self.cell_count) + "S"
             )
             logger.info(self.hardware_version)
 
@@ -171,8 +171,8 @@ class Ecs(Battery):
                 temp_soc if temp_soc < 4294901760 else temp_soc - 4294901760
             ) / 1000
 
-            # self.cycles = None
-            self.total_ah_drawn = None
+            # self.history.charge_cycles = None
+            self.history.total_ah_drawn = None
 
             self.protection = Protection()
 

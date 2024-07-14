@@ -12,8 +12,12 @@ import sys
 
 class Protection(object):
     """
-    This class holds Warning and alarm states for different types of Checks
-    They are of type integer, 2 represents an Alarm, 1 a Warning, 0 if everything is fine
+    This class holds warning and alarm states for different types of checks
+    They are of type integer
+
+    2 = alarm
+    1 = warning
+    0 = ok, everything is fine
     """
 
     ALARM = 2
@@ -21,6 +25,7 @@ class Protection(object):
     OK = 0
 
     def __init__(self):
+        # TODO: rework variable names, since they are not reflecting the correct state, see dbushelper.py
         self.voltage_high: int = None
         self.voltage_low: int = None
         self.voltage_cell_low: int = None
@@ -34,17 +39,110 @@ class Protection(object):
         self.temp_high_discharge: int = None
         self.temp_low_discharge: int = None
         self.temp_high_internal: int = None
+        self.fuse_blown: int = None
+
+
+class History:
+    """
+    This class holds the history data of the battery
+    """
+
+    def __init__(self):
+        self.deepest_discharge: float = None
+        """
+        Deepest discharge in Ampere hours
+        """
+
+        self.last_discharge: float = None
+        """
+        Last discharge in Ampere hours
+        """
+
+        self.average_discharge: float = None
+        """
+        Average discharge in Ampere hours
+        """
+
+        self.charge_cycles: int = None
+        """
+        Number of charge cycles
+        """
+
+        self.full_discharges: int = None
+        """
+        Number of full discharges
+        """
+
+        self.total_ah_drawn: float = None
+        """
+        Total Ah drawn (lifetime)
+        """
+
+        self.minimum_voltage: float = None
+        """
+        Minimum voltage in Volts (lifetime)
+        """
+
+        self.maximum_voltage: float = None
+        """
+        Maximum voltage in Volts (lifetime)
+        """
+
+        self.minimum_cell_voltage: float = None
+        """
+        Minimum cell voltage in Volts (lifetime)
+        """
+
+        self.maximum_cell_voltage: float = None
+        """
+        Maximum cell voltage in Volts (lifetime)
+        """
+
+        self.time_since_last_full_charge: int = None
+        """
+        Time since last full charge in seconds
+        """
+
+        self.low_voltage_alarms: int = None
+        """
+        Number of low voltage alarms
+        """
+
+        self.high_voltage_alarms: int = None
+        """
+        Number of high voltage alarms
+        """
+
+        self.discharged_energy: int = None
+        """
+        Discharged energy in kilo Watt hours
+        """
+
+        self.charged_energy: int = None
+        """
+        Charged energy in kilo Watt hours
+        """
 
 
 class Cell:
     """
-    This class holds information about a single Cell
+    This class holds information about a single cell
+
+    :param voltage: float = the voltage of the cell in Volts
+    :param balance: bool = the balance status of the cell
     """
 
-    voltage = None
-    balance = None
+    voltage: float = None
+    """
+    The voltage of a specific cell in Volts
+    """
 
-    def __init__(self, balance):
+    balance: bool = None
+    """
+    The balance status of a specific cell
+    """
+
+    def __init__(self, balance: bool = None):
         self.balance = balance
 
 
@@ -87,22 +185,21 @@ class Battery(ABC):
         self.control_allow_discharge: bool = None
 
         # display errors in the GUI
-        # throw Error if error_in_config is True
-        # see https://github.com/victronenergy/node-red-contrib-victron/blob/dbb2003818ec37115c1d1d568366b351c3770337/src/nodes/config-client.html#L869-L886  # noqa
+        # https://github.com/victronenergy/veutil/blob/master/inc/veutil/ve_regs_payload.h
+        # https://github.com/victronenergy/veutil/blob/master/src/qt/bms_error.cpp
         self.state = 0
-        # throw #31 Settings invalid if error_in_config is True
-        # see https://github.com/victronenergy/node-red-contrib-victron/blob/dbb2003818ec37115c1d1d568366b351c3770337/src/nodes/config-client.html#L638-L673  # noqa
         self.error_code = None
 
-        # fetched from the BMS from a field where the user can input a custom string
-        # only if available
         self.custom_field: str = None
+        """
+        Custom field that the user can define in the BMS settings via the BMS app
+        """
 
         self.init_values()
 
     def init_values(self) -> None:
         """
-        Used to reset values, if battery unexpectly disconnects
+        Used to initialize and reset values, if battery unexpectly disconnects
 
         :return: None
         """
@@ -114,10 +211,9 @@ class Battery(ABC):
         self.current_external: float = None
         self.capacity_remain: float = None
         self.capacity: float = None
-        self.cycles: float = None
-        self.total_ah_drawn: float = None
         self.production = None
         self.protection = Protection()
+        self.history = History()
         self.version = None
         self.time_to_soc_update: int = 0
         self.temp_sensors: int = None
@@ -151,24 +247,24 @@ class Battery(ABC):
     @abstractmethod
     def test_connection(self) -> bool:
         """
-        This abstract method needs to be implemented for each BMS. It shoudl return true if a connection
-        to the BMS can be established, false otherwise.
+        This abstract method needs to be implemented for each BMS. Each driver has to override this function
+        to test, if a connection to the BMS can be made.
 
-        :return: the success state
+        :return: True if the connection was successful else False
         """
-        # Each driver must override this function to test if a connection can be made
-        # return false when failed, true if successful
         return False
 
     def unique_identifier(self) -> str:
         """
-        Used to identify a BMS when multiple BMS are connected
-        If not provided by the BMS/driver then the hardware version and capacity is used,
-        since it can be changed by small amounts to make a battery unique.
-        On +/- 5 Ah you can identify 11 batteries
+        Used to identify a BMS when multiple BMS are connected and the port changes for whatever reason.
 
-        It's not possible to change the capacity or other values in some BMS
-        therefore the port has to be used as unique identifier
+        If not provided by the BMS/driver then the hardware version and capacity is used as fallback.
+        By slightly changing the capacity of each battery, this can make every battery unique.
+        On +/- 5 Ah you can identify 11 different batteries.
+
+        For some BMS it's not possible to change the capacity or other values. In this case the port has
+        to be used as `unique_identifier`. Custom values for this battery like the custom name, will be
+        swapped or lost, if the port changes.
         See https://github.com/Louisvdw/dbus-serialbattery/issues/1035
 
         :return: the unique identifier
@@ -189,6 +285,11 @@ class Battery(ABC):
             return string
 
     def connection_name(self) -> str:
+        """
+        Shown in the GUI under `Device -> Connection`
+
+        :return: the connection name
+        """
         return (
             "Serial "
             + self.port
@@ -200,48 +301,61 @@ class Battery(ABC):
         )
 
     def custom_name(self) -> str:
+        """
+        Shown in the GUI under `Device -> Name`
+        Overwritten, if the user set a custom name via GUI
+
+        :return: the connection name
+        """
         return "SerialBattery(" + self.type + ")"
 
     def product_name(self) -> str:
+        """
+        Shown in the GUI under `Device -> Product`
+
+        :return: the connection name
+        """
         return "SerialBattery(" + self.type + ")"
+
+    def use_callback(self, callback: Callable) -> bool:
+        """
+        Each driver may override this function to indicate whether it is able to provide value
+        updates on its own.
+
+        :return:
+            False when the battery cannot provide updates by itself, then it will be polled
+            every `poll_interval` milliseconds for new values
+
+            True if callable should be used for updates as they arrive from the battery
+        """
+        return False
 
     @abstractmethod
     def get_settings(self) -> bool:
         """
-        Each driver must override this function to read/set the battery settings
-        It is called once after a successful connection by DbusHelper.setup_vedbus()
-        Values:  battery_type, version, hardware_version, min_battery_voltage, max_battery_voltage,
-        MAX_BATTERY_CHARGE_CURRENT, MAX_BATTERY_DISCHARGE_CURRENT, cell_count, capacity
+        Each driver must override this function to read the battery settings.
+        It's called only once after a successful connection by `DbusHelper.setup_vedbus()`.
 
-        :return: false when fail, true if successful
-        """
-        return False
+        See `battery_template.py` for an example.
 
-    def use_callback(self, callback: Callable) -> bool:
-        """
-        Each driver may override this function to indicate whether it is
-        able to provide value updates on its own.
-
-        :return: false when battery cannot provide updates by itself and will be polled
-        every poll_interval milliseconds for new values true if callable should be
-        used for updates as they arrive from the battery
+        :return: False when fail, True if successful
         """
         return False
 
     @abstractmethod
     def refresh_data(self) -> bool:
         """
-        Each driver must override this function to read battery data and populate this class
-        It is called each poll just before the data is published to vedbus
+        Each driver must override this function to read battery data and populate this class.
+        It's called each poll inverval just before the data is published to the vedbus.
 
-        :return: false when fail, true if successful
+        :return: False when fail, True if successful
         """
         return False
 
     def to_temp(self, sensor: int, value: float) -> None:
         """
         Keep the temp value between -20 and 100 to handle sensor issues or no data.
-        The BMS should have already protected before those limits have been reached.
+        The BMS should already have protected the battery before those limits have been reached.
 
         :param sensor: temperature sensor number
         :param value: the sensor value
@@ -260,7 +374,7 @@ class Battery(ABC):
 
     def manage_charge_voltage(self) -> None:
         """
-        Manages the charge voltage by setting `self.control_voltage`
+        Manages the charge voltage by setting `self.control_voltage`.
 
         :return: None
         """
@@ -288,7 +402,7 @@ class Battery(ABC):
 
     def soc_calculation(self) -> None:
         """
-        Calculates the SOC based on the coulomb counting method
+        Calculates the SOC based on the coulomb counting method.
 
         :return: None
         """
@@ -407,7 +521,7 @@ class Battery(ABC):
 
     def soc_reset_voltage_management(self) -> None:
         """
-        Call this method only, if SOC_RESET_AFTER_DAYS is not False.
+        Call this method only, if `SOC_RESET_AFTER_DAYS` is not False.
 
         It sets the `self.max_battery_voltage` to the `SOC_RESET_VOLTAGE` once needed.
 
@@ -449,7 +563,7 @@ class Battery(ABC):
 
     def manage_charge_voltage_linear(self) -> None:
         """
-        Manages the charge voltage using linear interpolation by setting `self.control_voltage`
+        Manages the charge voltage using linear interpolation by setting `self.control_voltage`.
 
         :return: None
         """
@@ -759,8 +873,8 @@ class Battery(ABC):
 
     def set_cvl_linear(self, control_voltage: float) -> bool:
         """
-        Set CVL only once every LINEAR_RECALCULATION_EVERY seconds or if the CVL changes more than
-        LINEAR_RECALCULATION_ON_PERC_CHANGE percent
+        Set CVL only once every `LINEAR_RECALCULATION_EVERY` seconds or if the CVL changes more than
+        `LINEAR_RECALCULATION_ON_PERC_CHANGE` percent.
 
         TODO: Seems to not be needed anymore. Will be removed in future.
 
@@ -791,7 +905,7 @@ class Battery(ABC):
 
     def manage_charge_voltage_step(self) -> None:
         """
-        Manages the charge voltage using a step function by setting `self.control_voltage`
+        Manages the charge voltage using a step function by setting `self.control_voltage`.
 
         :return: None
         """
@@ -964,7 +1078,7 @@ class Battery(ABC):
 
     def manage_charge_current(self) -> None:
         """
-        Manages the charge current by setting `self.control_charge_current`
+        Manages the charge current by setting `self.control_charge_current`.
 
         :return: None
         """
@@ -1156,7 +1270,7 @@ class Battery(ABC):
 
     def calcMaxChargeCurrentReferringToCellVoltage(self) -> float:
         """
-        Calculate the maximum charge current referring to the cell voltage
+        Calculate the maximum charge current referring to the cell voltage.
 
         :return: The maximum charge current
         """
@@ -1208,7 +1322,7 @@ class Battery(ABC):
 
     def calcMaxDischargeCurrentReferringToCellVoltage(self) -> float:
         """
-        Calculate the maximum discharge current referring to the cell voltage
+        Calculate the maximum discharge current referring to the cell voltage.
 
         :return: The maximum discharge current
         """
@@ -1259,7 +1373,7 @@ class Battery(ABC):
 
     def calcMaxChargeCurrentReferringToTemperature(self) -> float:
         """
-        Calculate the maximum charge current referring to the temperature
+        Calculate the maximum charge current referring to the temperature.
 
         :return: The maximum charge current
         """
@@ -1316,7 +1430,7 @@ class Battery(ABC):
 
     def calcMaxDischargeCurrentReferringToTemperature(self) -> float:
         """
-        Calculate the maximum discharge current referring to the temperature
+        Calculate the maximum discharge current referring to the temperature.
 
         :return: The maximum discharge current
         """
@@ -1373,7 +1487,7 @@ class Battery(ABC):
 
     def calcMaxChargeCurrentReferringToSoc(self) -> float:
         """
-        Calculate the maximum charge current referring to the SoC
+        Calculate the maximum charge current referring to the SoC.
 
         :return: The maximum charge current
         """
@@ -1415,7 +1529,7 @@ class Battery(ABC):
 
     def calcMaxDischargeCurrentReferringToSoc(self) -> float:
         """
-        Calculate the maximum discharge current referring to the SoC
+        Calculate the maximum discharge current referring to the SoC.
 
         :return: The maximum discharge current
         """
@@ -1457,7 +1571,7 @@ class Battery(ABC):
 
     def get_min_cell(self) -> int:
         """
-        Get the cell with the lowest voltage
+        Get the cell with the lowest voltage.
 
         :return: The number of the cell with the lowest voltage
         """
@@ -1477,7 +1591,7 @@ class Battery(ABC):
 
     def get_max_cell(self) -> int:
         """
-        Get the cell with the highest voltage
+        Get the cell with the highest voltage.
 
         :return: The number of the cell with the highest voltage
         """
@@ -1497,7 +1611,7 @@ class Battery(ABC):
 
     def get_min_cell_desc(self) -> Union[str, None]:
         """
-        Get the description of the cell with the lowest voltage
+        Get the description of the cell with the lowest voltage.
 
         :return: The description of the cell with the lowest voltage
         """
@@ -1506,7 +1620,7 @@ class Battery(ABC):
 
     def get_max_cell_desc(self) -> Union[str, None]:
         """
-        Get the description of the cell with the highest voltage
+        Get the description of the cell with the highest voltage.
 
         :return: The description of the cell with the highest voltage
         """
@@ -1515,7 +1629,7 @@ class Battery(ABC):
 
     def get_cell_voltage(self, idx: int) -> Union[float, None]:
         """
-        Get the voltage of a specific cell
+        Get the voltage of a specific cell.
 
         :param idx: The index of the cell
         :return: The voltage of the cell
@@ -1526,7 +1640,7 @@ class Battery(ABC):
 
     def get_cell_voltage_sum(self) -> float:
         """
-        This method returns the sum of all cell voltages
+        This method returns the sum of all cell voltages.
 
         :return: The sum of all cell voltages
         """
@@ -1538,6 +1652,12 @@ class Battery(ABC):
         return voltage_sum
 
     def get_cell_balancing(self, idx: int) -> Union[int, None]:
+        """
+        Get the balancing status of a specific cell.
+
+        :param idx: The index of the cell
+        :return: The balancing status of the cell
+        """
         if idx >= min(len(self.cells), self.cell_count):
             return None
         if self.cells[idx].balance is not None and self.cells[idx].balance:
@@ -1545,6 +1665,12 @@ class Battery(ABC):
         return 0
 
     def get_capacity_remain(self) -> Union[float, None]:
+        """
+        Get the remaining capacity of the battery.
+        Use `self.capacity_remain` if it is set, otherwise calculate it using `self.capacity` and `self.soc_calc`.
+
+        :return: The remaining capacity of the battery
+        """
         if self.capacity_remain is not None:
             return self.capacity_remain
         if self.capacity is not None and self.soc_calc is not None:
@@ -1554,6 +1680,14 @@ class Battery(ABC):
     def get_timeToSoc(
         self, soc_target: float, percent_per_second: float, only_number: bool = False
     ) -> str:
+        """
+        Calculate the time to reach a specific SoC target.
+
+        :param soc_target: The target SoC
+        :param percent_per_second: The percentage per second
+        :param only_number: Whether to return only the seconds
+        :return: The time to reach the target SoC
+        """
         if self.get_current() > 0:
             soc_diff = soc_target - self.soc_calc
         else:
@@ -1588,25 +1722,28 @@ class Battery(ABC):
 
         return time_to_go_str
 
-    def get_secondsToString(self, timespan: int, precision: int = 3) -> str:
+    def get_secondsToString(self, seconds: int, precision: int = 3) -> str:
         """
         Transforms seconds to a string in the format: 1d 1h 1m 1s (Victron Style)
+
+        :param seconds: The seconds to transform
         :param precision:
-        0 = 1d
-        1 = 1d 1h
-        2 = 1d 1h 1m
-        3 = 1d 1h 1m 1s
+            - 0 = 1d
+            - 1 = 1d 1h
+            - 2 = 1d 1h 1m
+            - 3 = 1d 1h 1m 1s
 
         This was added, since timedelta() returns strange values, if time is negative
         e.g.: seconds: -70245
-              --> timedelta output: -1 day, 4:29:15
-              --> calculation: -1 day + 4:29:15
-              --> real value -19:30:45
-        """
-        tmp = "" if timespan >= 0 else "-"
-        timespan = abs(timespan)
+            --> timedelta output: -1 day, 4:29:15
+            --> calculation: -1 day + 4:29:15
+            --> real value -19:30:45
 
-        m, s = divmod(timespan, 60)
+        """
+        tmp = "" if seconds >= 0 else "-"
+        seconds = abs(seconds)
+
+        m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         d, h = divmod(h, 24)
 
@@ -1618,6 +1755,11 @@ class Battery(ABC):
         return tmp.rstrip()
 
     def get_min_cell_voltage(self) -> Union[float, None]:
+        """
+        Get the voltage of the cell with the lowest voltage.
+
+        :return: The voltage of the cell with the lowest voltage
+        """
         min_voltage = None
         if hasattr(self, "cell_min_voltage"):
             min_voltage = self.cell_min_voltage

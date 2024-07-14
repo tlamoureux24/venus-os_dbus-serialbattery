@@ -44,20 +44,22 @@ class Jkbms(Battery):
             return False
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         self.max_battery_voltage = utils.MAX_CELL_VOLTAGE * self.cell_count
         self.min_battery_voltage = utils.MIN_CELL_VOLTAGE * self.cell_count
 
-        # init the cell array
+        # init the cell array once
+        # if len(self.cells) == 0:
         for _ in range(self.cell_count):
             self.cells.append(Cell(False))
 
         self.hardware_version = (
-            "JKBMS "
+            "JKBMS"
+            + (" " + self.version + " " if self.version != "" else " ")
             + str(self.cell_count)
-            + " cells"
+            + "S"
             + (" (" + self.production + ")" if self.production else "")
         )
         return True
@@ -148,9 +150,9 @@ class Jkbms(Battery):
         self.soc = unpack_from(">B", self.get_data(status_data, b"\x85", offset, 1))[0]
 
         offset = cellbyte_count + 22
-        self.cycles = unpack_from(">H", self.get_data(status_data, b"\x87", offset, 2))[
-            0
-        ]
+        self.history.charge_cycles = unpack_from(
+            ">H", self.get_data(status_data, b"\x87", offset, 2)
+        )[0]
 
         # offset = cellbyte_count + 25
         # self.capacity_remain = unpack_from('>L', self.get_data(status_data, b'\x89', offset, 4))[0]
@@ -199,9 +201,12 @@ class Jkbms(Battery):
             self.production = None
 
         offset = cellbyte_count + 174
-        self.version = unpack_from(
-            ">15s", self.get_data(status_data, b"\xB7", offset, 15)
-        )[0].decode()
+        self.version = (
+            unpack_from(">15s", self.get_data(status_data, b"\xB7", offset, 15))[0]
+            .decode()
+            .replace("_", " ")
+            .strip()
+        )
 
         offset = cellbyte_count + 197
         self.unique_identifier_tmp = sub(
@@ -236,7 +241,7 @@ class Jkbms(Battery):
         return self.unique_identifier_tmp
 
     def to_fet_bits(self, byte_data):
-        tmp = bin(byte_data)[2:].rjust(3, utils.zero_char)
+        tmp = bin(byte_data)[2:].rjust(3, utils.ZERO_CHAR)
         self.charge_fet = is_bit_set(tmp[2])
         self.discharge_fet = is_bit_set(tmp[1])
         self.balancing = is_bit_set(tmp[0])
@@ -290,7 +295,7 @@ class Jkbms(Battery):
         Bit 13:309_B protection: 1 alarm, 0 nomal
         """
         pos = 13
-        tmp = bin(byte_data)[15 - pos :].rjust(pos + 1, utils.zero_char)
+        tmp = bin(byte_data)[15 - pos :].rjust(pos + 1, utils.ZERO_CHAR)
         # logger.debug(tmp)
 
         # low capacity alarm

@@ -7,9 +7,8 @@ exclude =
     ./etc/dbus-serialbattery/bms/mnb_test_max17853.py,
     ./etc/dbus-serialbattery/bms/mnb_utils_max17853.py,
     ./etc/dbus-serialbattery/bms/revov.py,
-    ./etc/dbus-serialbattery/minimalmodbus.py,
-    ./velib_python
-    venv
+    ./etc/dbus-serialbattery/ext/velib_python/,
+    ./etc/dbus-serialbattery/minimalmodbus.py
 extend-ignore:
     # E203 whitespace before ':' conflicts with black code formatting. Will be ignored in flake8
     E203

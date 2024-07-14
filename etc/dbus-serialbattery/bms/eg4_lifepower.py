@@ -46,7 +46,7 @@ class EG4_Lifepower(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         self.max_battery_charge_current = utils.MAX_BATTERY_CHARGE_CURRENT
@@ -149,7 +149,7 @@ class EG4_Lifepower(Battery):
         self.protection.temp_low_charge = 2 if (groups[5][1] & 0b10000000) > 0 else 0
 
         # Cycle counter
-        self.cycles = groups[6][0]
+        self.history.charge_cycles = groups[6][0]
 
         # Voltage
         self.voltage = groups[7][0] / 100

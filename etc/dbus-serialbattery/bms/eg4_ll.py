@@ -101,7 +101,7 @@ class EG4_LL(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Return True if success, False for failure
         status_results = self.read_cell_data()
 
@@ -196,7 +196,7 @@ class EG4_LL(Battery):
         self.max_battery_charge_current = int.from_bytes(packet[47:49], "big")
         self.soc = int.from_bytes(packet[51:53], "big")
         self.soh = int.from_bytes(packet[49:51], "big")
-        self.cycles = int.from_bytes(packet[61:65], "big")
+        self.history.charge_cycles = int.from_bytes(packet[61:65], "big")
         self.temp1 = int.from_bytes(packet[39:41], "big", signed=True)
         self.temp2 = int.from_bytes(packet[69:70], "big", signed=True)
         self.temp_mos = int.from_bytes(packet[70:71], "big", signed=True)
@@ -385,7 +385,7 @@ class EG4_LL(Battery):
         )
         logger.info(f"Heater Status: {heater_state}")
         logger.info("===== Battery Stats =====")
-        logger.info(f"SoH: {self.soh}% | Cycle Count: {self.cycles}")
+        logger.info(f"SoH: {self.soh}% | Cycle Count: {self.history.charge_cycles}")
         logger.info(f"Max Charging Current: {self.max_battery_charge_current} A")
         logger.info("===== Cell Stats =====")
         for c in range(self.cell_count):

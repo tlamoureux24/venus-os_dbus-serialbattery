@@ -134,7 +134,7 @@ class Daly_Can(Battery):
             self.charger_connected,
             self.load_connected,
             state,
-            self.cycles,
+            self.history.charge_cycles,
         ) = unpack_from(">bb??bhx", status_data)
 
         if self.cell_count == 0:
@@ -143,7 +143,7 @@ class Daly_Can(Battery):
         self.max_battery_voltage = MAX_CELL_VOLTAGE * self.cell_count
         self.min_battery_voltage = MIN_CELL_VOLTAGE * self.cell_count
 
-        self.hardware_version = "DalyBMS " + str(self.cell_count) + " cells"
+        self.hardware_version = "DalyBMS " + str(self.cell_count) + "S"
         logger.info(self.hardware_version)
         return True
 

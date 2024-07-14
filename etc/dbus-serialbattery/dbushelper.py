@@ -9,18 +9,10 @@ from utils import logger, publish_config_variables
 import utils
 from xml.etree import ElementTree
 
-# Victron packages
-sys.path.insert(
-    1,
-    os.path.join(
-        os.path.dirname(__file__),
-        "/opt/victronenergy/dbus-systemcalc-py/ext/velib_python",
-    ),
-)
+# add path to velib_python
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), "ext", "velib_python"))
 from vedbus import VeDbusService  # noqa: E402
-from settingsdevice import (  # noqa: E402
-    SettingsDevice,
-)
+from settingsdevice import SettingsDevice  # noqa: E402
 
 
 class SystemBus(dbus.bus.BusConnection):
@@ -51,7 +43,7 @@ class DbusHelper:
             + self.battery.port[self.battery.port.rfind("/") + 1 :]
             + ("__" + str(bms_address) if bms_address is not None else "")
         )
-        self._dbusservice = VeDbusService(self._dbusname, get_bus())
+        self._dbusservice = VeDbusService(self._dbusname, get_bus(), register=False)
         self.bms_id = "".join(
             # remove all non alphanumeric characters from the identifier
             c if c.isalnum() else "_"
@@ -263,8 +255,8 @@ class DbusHelper:
                                 )
                             except Exception:
                                 # set state to error, to show in the GUI that something is wrong
-                                self.state = 10
-                                self.error_code = 8
+                                self.battery.state = 10
+                                self.battery.error_code = 8
 
                                 logger.error(
                                     "AllowMaxVoltage could not be converted to type int: "
@@ -286,8 +278,8 @@ class DbusHelper:
                                 )
                             except Exception:
                                 # set state to error, to show in the GUI that something is wrong
-                                self.state = 10
-                                self.error_code = 8
+                                self.battery.state = 10
+                                self.battery.error_code = 8
 
                                 logger.error(
                                     "MaxVoltageStartTime could not be converted to type int: "
@@ -305,8 +297,8 @@ class DbusHelper:
                                     )
                                 except Exception:
                                     # set state to error, to show in the GUI that something is wrong
-                                    self.state = 10
-                                    self.error_code = 8
+                                    self.battery.state = 10
+                                    self.battery.error_code = 8
 
                                     logger.error(
                                         "SocCalc could not be converted to type float: "
@@ -326,8 +318,8 @@ class DbusHelper:
                                 )
                             except Exception:
                                 # set state to error, to show in the GUI that something is wrong
-                                self.state = 10
-                                self.error_code = 8
+                                self.battery.state = 10
+                                self.battery.error_code = 8
 
                                 logger.error(
                                     "SocResetLastReached could not be converted to type int: "
@@ -655,8 +647,25 @@ class DbusHelper:
             gettextcallback=lambda p, v: "{:0.3f}V".format(v),
         )
         self._dbusservice.add_path("/System/MinVoltageCellId", None, writeable=True)
+
+        self._dbusservice.add_path("/History/DeepestDischarge", None, writeable=True)
+        self._dbusservice.add_path("/History/LastDischarge", None, writeable=True)
+        self._dbusservice.add_path("/History/AverageDischarge", None, writeable=True)
         self._dbusservice.add_path("/History/ChargeCycles", None, writeable=True)
+        self._dbusservice.add_path("/History/FullDischarges", None, writeable=True)
         self._dbusservice.add_path("/History/TotalAhDrawn", None, writeable=True)
+        self._dbusservice.add_path("/History/MinimumVoltage", None, writeable=True)
+        self._dbusservice.add_path("/History/MaximumVoltage", None, writeable=True)
+        self._dbusservice.add_path("/History/MinimumCellVoltage", None, writeable=True)
+        self._dbusservice.add_path("/History/MaximumCellVoltage", None, writeable=True)
+        self._dbusservice.add_path(
+            "/History/TimeSinceLastFullCharge", None, writeable=True
+        )
+        self._dbusservice.add_path("/History/LowVoltageAlarms", None, writeable=True)
+        self._dbusservice.add_path("/History/HighVoltageAlarms", None, writeable=True)
+        self._dbusservice.add_path("/History/DischargedEnergy", None, writeable=True)
+        self._dbusservice.add_path("/History/ChargedEnergy", None, writeable=True)
+
         self._dbusservice.add_path("/Balancing", None, writeable=True)
         self._dbusservice.add_path("/Io/AllowToCharge", 0, writeable=True)
         self._dbusservice.add_path("/Io/AllowToDischarge", 0, writeable=True)
@@ -713,6 +722,7 @@ class DbusHelper:
         self._dbusservice.add_path(
             "/Alarms/HighInternalTemperature", None, writeable=True
         )
+        self._dbusservice.add_path("/Alarms/FuseBlown", None, writeable=True)
 
         # cell voltages
         if utils.BATTERY_CELL_DATA_FORMAT > 0:
@@ -778,6 +788,11 @@ class DbusHelper:
                 onchangecallback=self.battery.reset_soc_callback,
             )
 
+        # register VeDbusService after all paths where added
+        # https://github.com/victronenergy/velib_python/commit/494f9aef38f46d6cfcddd8b1242336a0a3a79563
+        # https://github.com/victronenergy/velib_python/commit/88a183d099ea5c60139e4d7494f9044e2dedd2d4
+        self._dbusservice.register()
+
         return True
 
     def publish_battery(self, loop):
@@ -834,10 +849,10 @@ class DbusHelper:
                 if time_since_first_error >= 60 * 20 and not utils.BLOCK_ON_DISCONNECT:
                     loop.quit()
 
-            # This is to mannage CVCL
+            # This is to manage CVCL
             self.battery.manage_charge_voltage()
 
-            # This is to mannage CCL\DCL
+            # This is to manage CCL\DCL
             self.battery.manage_charge_current()
 
             # Manage battery state, if not set to error (10)
@@ -917,8 +932,49 @@ class DbusHelper:
         # https://github.com/victronenergy/veutil/blob/master/inc/veutil/ve_regs_payload.h
         # https://github.com/victronenergy/veutil/blob/master/src/qt/bms_error.cpp
         self._dbusservice["/ErrorCode"] = self.battery.error_code
-        self._dbusservice["/History/ChargeCycles"] = self.battery.cycles
-        self._dbusservice["/History/TotalAhDrawn"] = self.battery.total_ah_drawn
+
+        self._dbusservice["/History/DeepestDischarge"] = (
+            self.battery.history.deepest_discharge
+        )
+        self._dbusservice["/History/LastDischarge"] = (
+            self.battery.history.last_discharge
+        )
+        self._dbusservice["/History/AverageDischarge"] = (
+            self.battery.history.average_discharge
+        )
+        self._dbusservice["/History/ChargeCycles"] = self.battery.history.charge_cycles
+        self._dbusservice["/History/FullDischarges"] = (
+            self.battery.history.full_discharges
+        )
+        self._dbusservice["/History/TotalAhDrawn"] = self.battery.history.total_ah_drawn
+        self._dbusservice["/History/MinimumVoltage"] = (
+            self.battery.history.minimum_voltage
+        )
+        self._dbusservice["/History/MaximumVoltage"] = (
+            self.battery.history.maximum_voltage
+        )
+        self._dbusservice["/History/MinimumCellVoltage"] = (
+            self.battery.history.minimum_cell_voltage
+        )
+        self._dbusservice["/History/MaximumCellVoltage"] = (
+            self.battery.history.maximum_cell_voltage
+        )
+        self._dbusservice["/History/TimeSinceLastFullCharge"] = (
+            self.battery.history.time_since_last_full_charge
+        )
+        self._dbusservice["/History/LowVoltageAlarms"] = (
+            self.battery.history.low_voltage_alarms
+        )
+        self._dbusservice["/History/HighVoltageAlarms"] = (
+            self.battery.history.high_voltage_alarms
+        )
+        self._dbusservice["/History/DischargedEnergy"] = (
+            self.battery.history.discharged_energy
+        )
+        self._dbusservice["/History/ChargedEnergy"] = (
+            self.battery.history.charged_energy
+        )
+
         self._dbusservice["/Io/AllowToCharge"] = (
             1 if self.battery.get_allow_to_charge() else 0
         )
@@ -1041,6 +1097,7 @@ class DbusHelper:
         self._dbusservice["/Alarms/HighInternalTemperature"] = (
             self.battery.protection.temp_high_internal
         )
+        self._dbusservice["/Alarms/FuseBlown"] = self.battery.protection.fuse_blown
 
         # cell voltages
         if utils.BATTERY_CELL_DATA_FORMAT > 0:
@@ -1071,8 +1128,8 @@ class DbusHelper:
                 )
             except Exception:
                 # set state to error, to show in the GUI that something is wrong
-                self.state = 10
-                self.error_code = 8
+                self.battery.state = 10
+                self.battery.error_code = 8
 
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 file = exception_traceback.tb_frame.f_code.co_filename
@@ -1149,8 +1206,8 @@ class DbusHelper:
 
         except Exception:
             # set state to error, to show in the GUI that something is wrong
-            self.state = 10
-            self.error_code = 8
+            self.battery.state = 10
+            self.battery.error_code = 8
 
             exception_type, exception_object, exception_traceback = sys.exc_info()
             file = exception_traceback.tb_frame.f_code.co_filename
@@ -1205,8 +1262,8 @@ class DbusHelper:
                             return value
                     except dbus.exceptions.DBusException as e:
                         # set state to error, to show in the GUI that something is wrong
-                        self.state = 10
-                        self.error_code = 8
+                        self.battery.state = 10
+                        self.battery.error_code = 8
 
                         logger.error(
                             f"getSettingsWithValues(): Failed to get value: {e}"
@@ -1232,8 +1289,8 @@ class DbusHelper:
             return True if method(value) == 0 else False
         except dbus.exceptions.DBusException as e:
             # set state to error, to show in the GUI that something is wrong
-            self.state = 10
-            self.error_code = 8
+            self.battery.state = 10
+            self.battery.error_code = 8
 
             logger.error(f"Failed to set setting: {e}")
 
@@ -1251,8 +1308,8 @@ class DbusHelper:
             return True if method(setting_name) == 0 else False
         except dbus.exceptions.DBusException as e:
             # set state to error, to show in the GUI that something is wrong
-            self.state = 10
-            self.error_code = 8
+            self.battery.state = 10
+            self.battery.error_code = 8
 
             logger.error(f"Failed to remove setting: {e}")
 

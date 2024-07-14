@@ -109,7 +109,7 @@ class Seplos(Battery):
         return result
 
     def get_settings(self):
-        # After successful connection get_settings will be called to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery.
         # Set the current limits, populate cell count, etc.
         # Return True if success, False for failure
 
@@ -275,15 +275,15 @@ class Seplos(Battery):
         self.capacity_remain = Seplos.int_from_2byte_hex_ascii(data, offset=104) / 100
         self.capacity = Seplos.int_from_2byte_hex_ascii(data, offset=110) / 100
         self.soc = Seplos.int_from_2byte_hex_ascii(data, offset=114) / 10
-        self.cycles = Seplos.int_from_2byte_hex_ascii(data, offset=122)
-        self.hardware_version = "Seplos BMS {} cells".format(self.cell_count)
+        self.history.charge_cycles = Seplos.int_from_2byte_hex_ascii(data, offset=122)
+        self.hardware_version = "Seplos BMS {}S".format(self.cell_count)
         logger.debug("Current = {}A , Voltage = {}V".format(self.current, self.voltage))
         logger.debug(
             "Capacity = {}/{}Ah , SOC = {}%".format(
                 self.capacity_remain, self.capacity, self.soc
             )
         )
-        logger.debug("Cycles = {}".format(self.cycles))
+        logger.debug("Cycles = {}".format(self.history.charge_cycles))
         logger.debug("HW:" + self.hardware_version)
 
         return True

@@ -74,7 +74,7 @@ class Sinowealth(Battery):
         self.max_battery_voltage = utils.MAX_CELL_VOLTAGE * self.cell_count
         self.min_battery_voltage = utils.MIN_CELL_VOLTAGE * self.cell_count
 
-        self.hardware_version = "Daly/Sinowealth BMS " + str(self.cell_count) + " cells"
+        self.hardware_version = "Daly/Sinowealth BMS " + str(self.cell_count) + "S"
         logger.debug(self.hardware_version)
 
         if not self.read_capacity():
@@ -168,8 +168,8 @@ class Sinowealth(Battery):
         # check if connection success
         if cycle_count is False:
             return False
-        self.cycles = int(unpack_from(">H", cycle_count[:2])[0])
-        logger.debug(">>> INFO: current cycle count: %u", self.cycles)
+        self.history.charge_cycles = int(unpack_from(">H", cycle_count[:2])[0])
+        logger.debug(">>> INFO: current cycle count: %u", self.history.charge_cycles)
         return True
 
     def read_pack_voltage(self):

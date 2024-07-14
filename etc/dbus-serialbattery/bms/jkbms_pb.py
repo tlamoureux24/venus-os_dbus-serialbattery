@@ -50,7 +50,7 @@ class Jkbms_pb(Battery):
         return result
 
     def get_settings(self):
-        # After successful  connection get_settings will be call to set up the battery.
+        # After successful connection get_settings() will be called to set up the battery
         # Set the current limits, populate cell count, etc
         # Return True if success, False for failure
         status_data = self.read_serial_data_jkbms_pb(self.command_settings, 300)
@@ -193,8 +193,20 @@ class Jkbms_pb(Battery):
         # Temperature sensors
         temp1 = unpack_from("<h", status_data, 162)[0] / 10
         temp2 = unpack_from("<h", status_data, 164)[0] / 10
-        self.to_temp(1, temp1 if temp1 < 99 else (100 - temp1))
-        self.to_temp(2, temp2 if temp2 < 99 else (100 - temp2))
+        temp3 = unpack_from("<h", status_data, 254)[0] / 10
+        temp4 = unpack_from("<h", status_data, 256)[0] / 10
+        temp5 = unpack_from("<h", status_data, 258)[0] / 10
+
+        if unpack_from("<B", status_data, 214)[0] & 0x02:
+            self.to_temp(1, temp1 if temp1 < 99 else (100 - temp1))
+        if unpack_from("<B", status_data, 214)[0] & 0x04:
+            self.to_temp(2, temp2 if temp2 < 99 else (100 - temp2))
+        if unpack_from("<B", status_data, 214)[0] & 0x08:
+            self.to_temp(3, temp3 if temp3 < 99 else (100 - temp3))
+        if unpack_from("<B", status_data, 214)[0] & 0x10:
+            self.to_temp(4, temp4 if temp4 < 99 else (100 - temp4))
+        if unpack_from("<B", status_data, 214)[0] & 0x20:
+            self.to_temp(5, temp5 if temp5 < 99 else (100 - temp5))
 
         # Battery voltage
         self.voltage = unpack_from("<I", status_data, 150)[0] / 1000
@@ -206,7 +218,7 @@ class Jkbms_pb(Battery):
         self.soc = unpack_from("<B", status_data, 173)[0]
 
         # cycles
-        self.cycles = unpack_from("<i", status_data, 182)[0]
+        self.history.charge_cycles = unpack_from("<i", status_data, 182)[0]
 
         # capacity
         self.capacity_remain = unpack_from("<i", status_data, 174)[0] / 1000

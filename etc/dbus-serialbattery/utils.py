@@ -1,45 +1,47 @@
 # -*- coding: utf-8 -*-
-import logging
-
-import configparser
-from pathlib import Path
-from typing import List, Any, Callable
-
-import serial
-from time import sleep
-from struct import unpack_from
+# Standard library imports
 import bisect
+import configparser
+import logging
+import sys
+from pathlib import Path
+from struct import unpack_from
+from time import sleep
+from typing import List, Any, Callable, Union
 
-# Logging
+# Third-party imports
+import serial
+
+
+# CONSTANTS
+DRIVER_VERSION: str = "1.4.20240714modbus"
+"""
+current version of the driver
+"""
+
+ZERO_CHAR: str = chr(48)
+"""
+number zero (`0`)
+"""
+
+DEGREE_SIGN: str = "\N{DEGREE SIGN}"
+"""
+degree sign (`°`)
+"""
+
+
+# LOGGING
 logging.basicConfig()
 logger = logging.getLogger("SerialBattery")
 
-PATH_CONFIG_DEFAULT = "config.default.ini"
-PATH_CONFIG_USER = "config.ini"
+PATH_CONFIG_DEFAULT: str = "config.default.ini"
+PATH_CONFIG_USER: str = "config.ini"
 
 config = configparser.ConfigParser()
 path = Path(__file__).parents[0]
 default_config_file_path = path.joinpath(PATH_CONFIG_DEFAULT).absolute().__str__()
 custom_config_file_path = path.joinpath(PATH_CONFIG_USER).absolute().__str__()
 config.read([default_config_file_path, custom_config_file_path])
-
-
-def _get_list_from_config(
-    group: str, option: str, mapper: Callable[[Any], Any] = lambda v: v
-) -> List[Any]:
-    rawList = config[group][option].split(",")
-    return list(
-        map(
-            mapper,
-            [item.strip() for item in rawList if item != "" and item is not None],
-        )
-    )
-
-
-# Constants
-DRIVER_VERSION = "1.4.20240710modbus"
-zero_char = chr(48)
-degree_sign = "\N{DEGREE SIGN}"
 
 # get logging level from config file
 if config["DEFAULT"]["LOGGING"].upper() == "ERROR":
@@ -51,12 +53,34 @@ elif config["DEFAULT"]["LOGGING"].upper() == "DEBUG":
 else:
     logger.setLevel(logging.INFO)
 
+
 # list to store config errors
 # this is needed else the errors are not instantly visible
 errors_in_config = []
 
-# save config values to constants
 
+# FUNCTIONS needed for config parsing
+def _get_list_from_config(
+    group: str, option: str, mapper: Callable[[Any], Any] = lambda v: v
+) -> List[Any]:
+    """
+    Get a string with comma separated values from the config file and return a list of values
+
+    :param group: Group in the config file
+    :param option: Option in the config file
+    :param mapper: Function to map the values to the correct type
+    :return: List of values
+    """
+    rawList = config[group][option].split(",")
+    return list(
+        map(
+            mapper,
+            [item.strip() for item in rawList if item != "" and item is not None],
+        )
+    )
+
+
+# SAVE CONFIG VALUES to constants
 # --------- Battery Current limits ---------
 MAX_BATTERY_CHARGE_CURRENT: float = float(
     config["DEFAULT"]["MAX_BATTERY_CHARGE_CURRENT"]
@@ -64,7 +88,7 @@ MAX_BATTERY_CHARGE_CURRENT: float = float(
 """
 Defines the maximum charge current that the battery can accept.
 """
-MAX_BATTERY_DISCHARGE_CURRENT = float(
+MAX_BATTERY_DISCHARGE_CURRENT: float = float(
     config["DEFAULT"]["MAX_BATTERY_DISCHARGE_CURRENT"]
 )
 """
@@ -114,7 +138,7 @@ if SOC_RESET_VOLTAGE < MAX_CELL_VOLTAGE:
         "**CONFIG ISSUE**: SOC_RESET_VOLTAGE ({SOC_RESET_VOLTAGE} V) is less than MAX_CELL_VOLTAGE ({MAX_CELL_VOLTAGE} V). "
         + "To ensure that the driver still works correctly, SOC_RESET_VOLTAGE was set to MAX_CELL_VOLTAGE. Please check the configuration."
     )
-SOC_RESET_AFTER_DAYS = (
+SOC_RESET_AFTER_DAYS: int = (
     int(config["DEFAULT"]["SOC_RESET_AFTER_DAYS"])
     if config["DEFAULT"]["SOC_RESET_AFTER_DAYS"] != ""
     else False
@@ -422,23 +446,65 @@ SEPLOS_USE_BMS_VALUES: bool = "True" == config["DEFAULT"]["SEPLOS_USE_BMS_VALUES
 VOLTAGE_DROP: float = float(config["DEFAULT"]["VOLTAGE_DROP"])
 
 
-# --------- Functions ---------
-def constrain(val, min_val, max_val):
+# FUNCTIONS
+def constrain(val: float, min_val: float, max_val: float) -> float:
+    """
+    Constrain a value between a minimum and maximum value
+
+    :param val: Value to constrain
+    :param min_val: Minimum value
+    :param max_val: Maximum value
+    :return: Constrained value
+    """
+    # Swap min and max if min is greater than max
     if min_val > max_val:
         min_val, max_val = max_val, min_val
     return min(max_val, max(min_val, val))
 
 
-def mapRange(inValue, inMin, inMax, outMin, outMax):
+def mapRange(
+    inValue: float, inMin: float, inMax: float, outMin: float, outMax: float
+) -> float:
+    """
+    Map a value from one range to another
+
+    :param inValue: Input value
+    :param inMin: Minimum value of the input range
+    :param inMax: Maximum value of the input range
+    :param outMin: Minimum value of the output range
+    :param outMax: Maximum value of the output range
+    :return: Mapped value
+    """
     return outMin + (((inValue - inMin) / (inMax - inMin)) * (outMax - outMin))
 
 
-def mapRangeConstrain(inValue, inMin, inMax, outMin, outMax):
+def mapRangeConstrain(
+    inValue: float, inMin: float, inMax: float, outMin: float, outMax: float
+) -> float:
+    """
+    Map a value from one range to another and constrain it between the output range
+
+    :param inValue: Input value
+    :param inMin: Minimum value of the input range
+    :param inMax: Maximum value of the input range
+    :param outMin: Minimum value of the output range
+    :param outMax: Maximum value of the output range
+    :return: Mapped and constrained value
+    """
     return constrain(mapRange(inValue, inMin, inMax, outMin, outMax), outMin, outMax)
 
 
-def calcLinearRelationship(inValue, inArray, outArray):
-    if inArray[0] > inArray[-1]:  # change compare-direction in array
+def calcLinearRelationship(inValue: float, inArray: float, outArray: float) -> float:
+    """
+    Calculate a linear relationship between two arrays
+
+    :param inValue: Input value
+    :param inArray: Input array
+    :param outArray: Output array
+    :return: Calculated value
+    """
+    # change compare-direction in array
+    if inArray[0] > inArray[-1]:
         return calcLinearRelationship(inValue, inArray[::-1], outArray[::-1])
     else:
         # Handle out of bounds
@@ -456,8 +522,20 @@ def calcLinearRelationship(inValue, inArray, outArray):
         return mapRangeConstrain(inValue, lowerIN, upperIN, lowerOUT, upperOUT)
 
 
-def calcStepRelationship(inValue, inArray, outArray, returnLower):
-    if inArray[0] > inArray[-1]:  # change compare-direction in array
+def calcStepRelationship(
+    inValue: float, inArray: float, outArray: float, returnLower: float
+) -> float:
+    """
+    Calculate a step relationship between two arrays
+
+    :param inValue: Input value
+    :param inArray: Input array
+    :param outArray: Output array
+    :param returnLower: Return lower value if True, else return higher value
+    :return: Calculated value
+    """
+    # change compare-direction in array
+    if inArray[0] > inArray[-1]:
         return calcStepRelationship(inValue, inArray[::-1], outArray[::-1], returnLower)
 
     # Handle out of bounds
@@ -472,45 +550,44 @@ def calcStepRelationship(inValue, inArray, outArray, returnLower):
     return outArray[idx] if returnLower else outArray[idx - 1]
 
 
-def is_bit_set(tmp):
-    return False if tmp == zero_char else True
+def is_bit_set(tmp: any) -> bool:
+    """
+    Checks if a bit is set high or low
+
+    :param tmp: Value to check
+    :return: True if bit is set, False if not
+    """
+    return False if tmp == ZERO_CHAR else True
 
 
-def kelvin_to_celsius(kelvin_temp):
-    return kelvin_temp - 273.1
+def kelvin_to_celsius(temp: float) -> float:
+    """
+    Convert Kelvin to Celsius
+
+    :param temp: Temperature in Kelvin
+    :return: Temperature in Celsius
+    """
+    return temp - 273.1
 
 
-def bytearray_to_string(data):
+def bytearray_to_string(data: bytearray) -> str:
+    """
+    Convert a bytearray to a string
+
+    :param data: Data to convert
+    :return: Converted string
+    """
     return "".join("\\x" + format(byte, "02x") for byte in data)
 
 
-def format_value(value, prefix, suffix):
-    return (
-        None
-        if value is None
-        else ("" if prefix is None else prefix)
-        + str(value)
-        + ("" if suffix is None else suffix)
-    )
+def open_serial_port(port: str, baud: int) -> serial.Serial:
+    """
+    Open a serial port
 
-
-def read_serial_data(
-    command, port, baud, length_pos, length_check, length_fixed=None, length_size=None
-):
-    try:
-        with serial.Serial(port, baudrate=baud, timeout=0.1) as ser:
-            return read_serialport_data(
-                ser, command, length_pos, length_check, length_fixed, length_size
-            )
-
-    except serial.SerialException as e:
-        logger.error(e)
-        return False
-
-
-# Open the serial port
-# Return variable for the openned port
-def open_serial_port(port, baud):
+    :param port: Serial port
+    :param baud: Baud rate
+    :return: Opened serial port
+    """
     ser = None
     tries = 3
     while tries > 0:
@@ -524,26 +601,36 @@ def open_serial_port(port, baud):
     return ser
 
 
-# Read data from previously opened serial port
 def read_serialport_data(
     ser: serial.Serial,
-    command,
-    length_pos,
-    length_check,
-    length_fixed=None,
-    length_size=None,
-):
+    command: bytearray,
+    length_pos: int,
+    length_check: int,
+    length_fixed: Union[int, None] = None,
+    length_size: str = "B",
+) -> bytearray:
+    """
+    Read data from a serial port
+
+    :param ser: Serial port
+    :param command: Command to send
+    :param length_pos: Position of the length byte
+    :param length_check: Length of the checksum
+    :param length_fixed: Fixed length of the data, if not set it will be read from the data
+    :param length_size: Size of the length byte, can be "B", "H", "I" or "L"
+    :return: Data read from the serial port
+    """
     try:
         ser.flushOutput()
         ser.flushInput()
         ser.write(command)
 
-        length_byte_size = 1
-        if length_size is not None:
-            if length_size.upper() == "H":
-                length_byte_size = 2
-            elif length_size.upper() == "I" or length_size.upper() == "L":
-                length_byte_size = 4
+        if length_size.upper() == "B":
+            length_byte_size = 1
+        elif length_size.upper() == "H":
+            length_byte_size = 2
+        elif length_size.upper() == "I" or length_size.upper() == "L":
+            length_byte_size = 4
 
         count = 0
         toread = ser.inWaiting()
@@ -566,7 +653,6 @@ def read_serialport_data(
                     ">>> ERROR: No reply - returning [len:" + str(len(res)) + "]"
                 )
                 return False
-            length_size = length_size if length_size is not None else "B"
             length = unpack_from(">" + length_size, res, length_pos)[0]
 
         # logger.info('serial data length ' + str(length))
@@ -595,9 +681,85 @@ def read_serialport_data(
         logger.error(e)
         return False
 
+    except Exception:
+        (
+            exception_type,
+            exception_object,
+            exception_traceback,
+        ) = sys.exc_info()
+        file = exception_traceback.tb_frame.f_code.co_filename
+        line = exception_traceback.tb_lineno
+        logger.error(
+            f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}"
+        )
+        return False
 
-# Publish config variables to dbus
-def publish_config_variables(dbusservice):
+
+def read_serial_data(
+    command: any,
+    port: str,
+    baud: int,
+    length_pos: int,
+    length_check: int,
+    length_fixed: Union[int, None] = None,
+    length_size: str = "B",
+) -> bytearray:
+    """
+    Read data from a serial port
+
+    :param command: Command to send
+    :param port: Serial port
+    :param baud: Baud rate
+    :param length_pos: Position of the length byte
+    :param length_check: Length of the checksum
+    :param length_fixed: Fixed length of the data, if not set it will be read from the data
+    :param length_size: Size of the length byte, can be "B", "H", "I" or "L"
+    :return: Data read from the serial port
+    """
+    try:
+        with serial.Serial(port, baudrate=baud, timeout=0.1) as ser:
+            return read_serialport_data(
+                ser, command, length_pos, length_check, length_fixed, length_size
+            )
+
+    except serial.SerialException as e:
+        logger.error(e)
+        return False
+
+    except Exception:
+        (
+            exception_type,
+            exception_object,
+            exception_traceback,
+        ) = sys.exc_info()
+        file = exception_traceback.tb_frame.f_code.co_filename
+        line = exception_traceback.tb_lineno
+        logger.error(
+            f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}"
+        )
+
+
+def validate_config_values() -> bool:
+    """
+    Validate the config values and log any issues.
+    Has to be called in a function, otherwise the error messages are not instantly visible.
+
+    :return: True if there are no errors else False
+    """
+    # loop through all errors and log them
+    for error in errors_in_config:
+        logger.error(error)
+
+    # return True if there are no errors
+    return len(errors_in_config) == 0
+
+
+def publish_config_variables(dbusservice) -> None:
+    """
+    Publish the config variables to the dbus path "/Info/Config/"
+
+    :param dbusservice: DBus service
+    """
     for variable, value in locals_copy.items():
         if variable.startswith("__"):
             continue
@@ -610,18 +772,7 @@ def publish_config_variables(dbusservice):
             dbusservice.add_path(f"/Info/Config/{variable}", value)
 
 
-# Validate config values
-def validate_config_values() -> bool:
-    """
-    Validate the config values and log any issues.
-    Has to be called in a function, otherwise the error messages are not instantly visible.
-    """
-    # loop through all errors and log them
-    for error in errors_in_config:
-        logger.error(error)
-
-    # return True if there are no errors
-    return len(errors_in_config) == 0
-
-
-locals_copy = locals().copy()
+# Save the local variables to publish them wtih publish_config_variables() to the dbus
+# only if PUBLISH_CONFIG_VALUES is set to True
+if PUBLISH_CONFIG_VALUES:
+    locals_copy = locals().copy()
