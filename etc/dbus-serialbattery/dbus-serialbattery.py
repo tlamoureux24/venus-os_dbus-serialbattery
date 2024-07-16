@@ -180,7 +180,7 @@ def main():
             logger.error("missing bluetooth address")
         else:
             ble_address = sys.argv[2]
-        
+
             if port == "Jkbms_Ble":
                 # noqa: F401 --> ignore flake "imported but unused" error
                 from bms.jkbms_ble import Jkbms_Ble  # noqa: F401
@@ -190,7 +190,10 @@ def main():
                 from bms.lltjbd_ble import LltJbd_Ble  # noqa: F401
 
             class_ = eval(port)
-            testbms = class_("ble_" + ble_address.replace(":", "").lower(), 9600, ble_address)
+            # do not remove ble_ prefix, since the dbus service cannot be only numbers
+            testbms = class_(
+                "ble_" + ble_address.replace(":", "").lower(), 9600, ble_address
+            )
             if testbms.test_connection():
                 logger.info("Connection established to " + testbms.__class__.__name__)
                 battery = testbms

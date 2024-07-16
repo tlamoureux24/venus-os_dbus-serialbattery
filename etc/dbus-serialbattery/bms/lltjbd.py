@@ -567,64 +567,96 @@ class LltJbd(Battery):
         self.discharge_fet = is_bit_set(tmp[0])
 
     def read_gen_data(self):
-        gen_data = self.read_serial_data_llt(self.command_general)
-        # check if connect success
-        if gen_data is False or len(gen_data) < 23:
+        try:
+            gen_data = self.read_serial_data_llt(self.command_general)
+            # check if connect success
+            if gen_data is False or len(gen_data) < 23:
+                return False
+
+            (
+                voltage,
+                current,
+                capacity_remain,
+                capacity,
+                self.history.charge_cycles,
+                self.production,
+                balance,
+                balance2,
+                protection,
+                version,
+                soc,
+                fet,
+                self.cell_count,
+                self.temp_sensors,
+            ) = unpack_from(">HhHHHHhHHBBBBB", gen_data)
+
+            self.voltage = voltage / 100
+            self.current = current / 100
+
+            # https://github.com/Louisvdw/dbus-serialbattery/issues/769#issuecomment-1720805325
+            # if not self.cycle_capacity or self.cycle_capacity < capacity_remain:
+            #     self.cycle_capacity = capacity
+
+            # cycle_capacity seens to be lowered sporadically which results in a wrong SoC calculation
+            # https://github.com/mr-manuel/venus-os_dbus-serialbattery/issues/47
+            self.soc = round(100 * capacity_remain / capacity, 2)
+
+            soc_2 = (
+                round(100 * capacity_remain / self.cycle_capacity, 2)
+                if self.cycle_capacity is not None
+                else 0
+            )
+
+            logger.info(
+                f"soc (BMS): {soc} - "
+                + f"self.soc (calc): {self.soc} - "
+                + f"soc_2 (calc): {soc_2} - "
+                + f"capacity: {capacity} - "
+                + f"self.cycle_capacity: {self.cycle_capacity} - "
+                + f"capacity_remain: {capacity_remain}"
+            )
+
+            self.capacity_remain = capacity_remain / 100
+            self.capacity = capacity / 100
+            self.to_cell_bits(balance, balance2)
+            self.hardware_version = float(
+                str(version >> 4 & 0x0F) + "." + str(version & 0x0F)
+            )
+            self.to_fet_bits(fet)
+            self.to_protection_bits(protection)
+            self.max_battery_voltage = utils.MAX_CELL_VOLTAGE * self.cell_count
+            self.min_battery_voltage = utils.MIN_CELL_VOLTAGE * self.cell_count
+
+            # 0 = MOS, 1 = temp 1, 2 = temp 2
+            for t in range(self.temp_sensors):
+                if len(gen_data) < 23 + (2 * t) + 2:
+                    logger.warn(
+                        "Expected %d temperature sensors, but received only %d sensor readings!",
+                        self.temp_sensors,
+                        t,
+                    )
+                    return True
+                temperature = unpack_from(">H", gen_data, 23 + (2 * t))[0]
+                # if there is only one sensor, use it as the main temperature sensor
+                if self.temp_sensors == 1:
+                    self.to_temp(1, utils.kelvin_to_celsius(temperature / 10))
+                else:
+                    self.to_temp(t, utils.kelvin_to_celsius(temperature / 10))
+
+            return True
+
+        except Exception:
+            (
+                exception_type,
+                exception_object,
+                exception_traceback,
+            ) = sys.exc_info()
+            file = exception_traceback.tb_frame.f_code.co_filename
+            line = exception_traceback.tb_lineno
+            logger.error(
+                f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}"
+            )
             return False
-
-        (
-            voltage,
-            current,
-            capacity_remain,
-            capacity,
-            self.history.charge_cycles,
-            self.production,
-            balance,
-            balance2,
-            protection,
-            version,
-            soc,
-            fet,
-            self.cell_count,
-            self.temp_sensors,
-        ) = unpack_from(">HhHHHHhHHBBBBB", gen_data)
-
-        self.voltage = voltage / 100
-        self.current = current / 100
-
-        # https://github.com/Louisvdw/dbus-serialbattery/issues/769#issuecomment-1720805325
-        if not self.cycle_capacity or self.cycle_capacity < capacity_remain:
-            self.cycle_capacity = capacity
-
-        self.soc = round(100 * capacity_remain / self.cycle_capacity, 2)
-        self.capacity_remain = capacity_remain / 100
-        self.capacity = capacity / 100
-        self.to_cell_bits(balance, balance2)
-        self.hardware_version = float(
-            str(version >> 4 & 0x0F) + "." + str(version & 0x0F)
-        )
-        self.to_fet_bits(fet)
-        self.to_protection_bits(protection)
-        self.max_battery_voltage = utils.MAX_CELL_VOLTAGE * self.cell_count
-        self.min_battery_voltage = utils.MIN_CELL_VOLTAGE * self.cell_count
-
-        # 0 = MOS, 1 = temp 1, 2 = temp 2
-        for t in range(self.temp_sensors):
-            if len(gen_data) < 23 + (2 * t) + 2:
-                logger.warn(
-                    "Expected %d temperature sensors, but received only %d sensor readings!",
-                    self.temp_sensors,
-                    t,
-                )
-                return True
-            temperature = unpack_from(">H", gen_data, 23 + (2 * t))[0]
-            # if there is only one sensor, use it as the main temperature sensor
-            if self.temp_sensors == 1:
-                self.to_temp(1, utils.kelvin_to_celsius(temperature / 10))
-            else:
-                self.to_temp(t, utils.kelvin_to_celsius(temperature / 10))
-
-        return True
 
     def read_cell_data(self):
         cell_data = self.read_serial_data_llt(self.command_cell)
